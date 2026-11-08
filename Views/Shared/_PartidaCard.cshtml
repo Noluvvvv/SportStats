@@ -1,0 +1,45 @@
+@model PartidaResumo
+
+@* BACKEND: trocar href="#" pela pagina de detalhes (ex.: /Partidas/Detalhes/{id})
+   com estatisticas dos atletas, retrospecto e eventos da partida. (BACK-02) *@
+<a class="jogo @(Model.AoVivo ? "jogo-ao-vivo" : "")" href="#">
+    <span class="jogo-status">
+        @if (Model.AoVivo)
+        {
+            <span class="status-vivo"><span class="pulso" aria-hidden="true"></span>AO VIVO</span>
+        }
+        else if (Model.Encerrada)
+        {
+            <span>Encerrado</span>
+        }
+        else
+        {
+            <span>@Model.DataHora.ToString("dd/MM HH:mm")</span>
+        }
+        @if (Model.Formato is not null)
+        {
+            <small class="formato">@Model.Formato</small>
+        }
+    </span>
+
+    <span class="time time-casa">
+        <span class="nome">@Model.TimeCasa</span>
+        <abbr class="sigla" title="@Model.TimeCasa">@Model.SiglaCasa</abbr>
+    </span>
+
+    <span class="placar">
+        @if (Model.Agendada)
+        {
+            <span class="vs">vs</span>
+        }
+        else
+        {
+            <b data-placar-casa="@Model.Id">@Model.PlacarCasa</b><i>-</i><b data-placar-fora="@Model.Id">@Model.PlacarFora</b>
+        }
+    </span>
+
+    <span class="time time-fora">
+        <span class="nome">@Model.TimeFora</span>
+        <abbr class="sigla" title="@Model.TimeFora">@Model.SiglaFora</abbr>
+    </span>
+</a>

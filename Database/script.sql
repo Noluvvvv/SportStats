@@ -202,3 +202,8 @@ INSERT INTO EstatisticaCsGo (AtletaId, Abates, Assistencias, Headshots) VALUES
 (18, 305, 70, 160),
 (19, 260, 110, 100),
 (20, 275, 85, 120);
+-- TODO [BACK-06] Ajustes de banco (editar este arquivo e manter DROP/CREATE/INSERT completos):
+--   1. Partida: adicionar colunas Status (Agendada/AoVivo/Encerrada) e Minuto.
+--   2. Modalidade: adicionar colunas Grupo ('esportes'/'esports') e Slug.
+--   3. Depois atualizar PartidaConsultaRepository, PartidaRepository.Montar e CatalogoModalidades.
+--   4. Antes da entrega, trocar os NOW() das partidas de teste por datas fixas.

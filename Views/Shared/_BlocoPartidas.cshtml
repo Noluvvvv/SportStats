@@ -1,0 +1,29 @@
+@model BlocoPartidas
+
+<section class="bloco">
+    <h2 class="bloco-titulo">
+        @if (Model.Destaque)
+        {
+            <span class="pulso" aria-hidden="true"></span>
+        }
+        @Model.Titulo
+    </h2>
+
+    @if (!Model.Partidas.Any())
+    {
+        <p class="vazio vazio-caixa">@Model.Vazio</p>
+    }
+    else
+    {
+        @foreach (var grupo in Model.Partidas.GroupBy(p => p.Campeonato))
+        {
+            <div class="campeonato">
+                <h3 class="campeonato-nome">@grupo.Key</h3>
+                @foreach (var p in grupo)
+                {
+                    <partial name="_PartidaCard" model="p" />
+                }
+            </div>
+        }
+    }
+</section>

@@ -1,8 +1,88 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model HomeViewModel
+@{
+    ViewData["Title"] = Model.Grupo == "esports" ? "E-sports" : "Esportes";
+    ViewData["Grupo"] = Model.Grupo;
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<nav class="modalidades" aria-label="Modalidades">
+    <div class="modalidades-lista">
+        <a class="@(Model.ModalidadeSlug is null ? "ativo" : "")" asp-action="Index" asp-route-grupo="@Model.Grupo">Principais</a>
+        @foreach (var m in Model.Modalidades)
+        {
+            <a class="@(Model.ModalidadeSlug == m.Slug ? "ativo" : "")" asp-action="Index" asp-route-grupo="@m.Grupo" asp-route-modalidade="@m.Slug">@m.Nome</a>
+        }
+    </div>
+</nav>
+
+<main class="grade" data-ao-vivo-url="@Url.Action("AoVivo", "Home", new { grupo = Model.Grupo, modalidade = Model.ModalidadeSlug })">
+
+    <aside class="coluna" aria-label="Competições">
+        <h2 class="coluna-titulo">Competições</h2>
+        @if (!Model.Competicoes.Any())
+        {
+            <p class="vazio">Nenhuma competição cadastrada.</p>
+        }
+        else
+        {
+            <ul class="lista-competicoes">
+                @foreach (var c in Model.Competicoes)
+                {
+                    <li>
+                        <a class="@(Model.CampeonatoId == c.Id ? "ativo" : "")" asp-action="Index" asp-route-grupo="@Model.Grupo" asp-route-modalidade="@c.ModalidadeSlug" asp-route-campeonato="@c.Id">
+                            <span>@c.Nome</span>
+                            <small>@c.Modalidade</small>
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </aside>
+
+    <section class="centro">
+        <partial name="_BlocoPartidas" model="@(new BlocoPartidas("Ao vivo agora", Model.AoVivo, "Nenhuma partida ao vivo no momento.", true))" />
+        <partial name="_BlocoPartidas" model="@(new BlocoPartidas("Próximas partidas", Model.Proximas, "Sem partidas agendadas."))" />
+        <partial name="_BlocoPartidas" model="@(new BlocoPartidas("Resultados recentes", Model.Recentes, "Sem resultados ainda."))" />
+    </section>
+
+    <aside class="coluna" aria-label="Classificação">
+        <h2 class="coluna-titulo">Classificação</h2>
+        @if (Model.Classificacao.Count == 0)
+        {
+            <p class="vazio">Sem jogos encerrados ainda.</p>
+        }
+        else
+        {
+            <p class="sub">@Model.TituloClassificacao</p>
+            <table class="tabela">
+                <caption class="sr-only">Classificação de @Model.TituloClassificacao</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">J</th>
+                        <th scope="col">V</th>
+                        <th scope="col">SG</th>
+                        <th scope="col">Pts</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Classificacao.Count; i++)
+                    {
+                        var l = Model.Classificacao[i];
+                        <tr class="@(i == 0 ? "lider" : "")">
+                            <td>@(i + 1)</td>
+                            <td class="col-time">@l.Nome</td>
+                            <td>@l.Jogos</td>
+                            <td>@l.Vitorias</td>
+                            <td>@(l.Saldo > 0 ? "+" + l.Saldo : l.Saldo.ToString())</td>
+                            <td><strong>@l.Pontos</strong></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @* BACKEND: espaco reservado para artilharia / ranking de atletas por rating
+           (EstatisticaFutebol, EstatisticaBasquete, EstatisticaValorant, EstatisticaCsGo). (BACK-04) *@
+    </aside>
+</main>
