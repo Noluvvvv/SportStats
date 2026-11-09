@@ -26,20 +26,14 @@ namespace SportStats.Controllers
 
         private readonly IRepository<Time> _timeRepository;
 
-        // Construtor da classe TimesController.
         public TimesController(IRepository<Time> timeRepository)
         {
-            // Guardamos o repositório recebido no campo privado.
             this._timeRepository = timeRepository;
         }
 
-        // Action responsável por exibir a listagem de todos os Times.
         public IActionResult Index()
         {
-            // Solicita ao repositório todos os Times cadastrados no banco.
             var times = _timeRepository.ObterTodos();
-
-            // Envia a lista de Times para a View Index.cshtml.
             return View(times);
         }
     }
