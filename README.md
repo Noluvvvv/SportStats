@@ -6,7 +6,7 @@ Portal de estatísticas de esportes e e-sports, inspirado no SofaScore.
 ## Equipe
 <!-- TODO [BACK-07] Cada integrante preenche a propria linha (nome completo e RA). -->
 | Nome completo | RA |
-|---|---|
+|Ângelo Avezum Marques da Silva|2840482511017|
 | | |
 
 ## Diagrama de classes
