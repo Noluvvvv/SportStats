@@ -1,3 +1,4 @@
+using SportStats.Integracao;
 using SportStats.Models;
 using SportStats.Repositories.Dapper;
 using SportStats.Repositories.Interfaces;
@@ -9,6 +10,8 @@ builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
 builder.Services.AddScoped<IRepository<Time>, TimeRepository>();
 builder.Services.AddScoped<IPartidaRepository, PartidaRepository>();
 builder.Services.AddScoped<IRepository<Partida>>(sp => sp.GetRequiredService<IPartidaRepository>());
+
+builder.Services.AddIntegracaoEsportiva(builder.Configuration);
 
 var app = builder.Build();
 
