@@ -7,4 +7,4 @@
 //      { "id": 1, "placarCasa": 2, "placarFora": 1, "minuto": 67, "status": "AoVivo" }
 // 4. No front, em wwwroot/js/site.js, trocar o polling pelo cliente SignalR.
 //    O script atualiza os elementos [data-placar-casa="id"] e [data-placar-fora="id"].
-// 5. Remover a action Home/AoVivo quando o hub estiver funcionando.
+// 5. Remover a action Home/AoVivo quando o hub estiver funcionando.// STATUS: provedores ESPN e PandaScore prontos em Integracao/. Falta: Hub SignalR, gravar no MySQL (FonteId + IdExterno, BACK-06) e trocar o polling do site.js.
