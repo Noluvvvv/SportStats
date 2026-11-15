@@ -6,10 +6,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SportStats.Integracao.Modelos;
 using SportStats.Integracao.Opcoes;
-
 namespace SportStats.Integracao.PandaScore;
 
 // REST: autenticacao por Bearer (o token nao aparece na URL nem nos logs).
+// aplicando versao teste, provavelmente vou mudar por ser utlizar tokens em seu uso
 // WebSocket: so aceita o token na URL (?token=); por isso a URL nunca e registrada em log.
 public sealed class ProvedorPandaScore : IProvedorTempoReal
 {
