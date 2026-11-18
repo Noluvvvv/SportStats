@@ -1,3 +1,4 @@
+using SportStats.Hubs;
 using SportStats.Integracao;
 using SportStats.Models;
 using SportStats.Repositories.Dapper;
@@ -28,5 +29,7 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
    .WithStaticAssets();
+
+app.MapHub<PlacarHub>("/hubs/placar");
 
 app.Run();

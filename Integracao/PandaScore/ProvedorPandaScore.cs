@@ -1,45 +1,58 @@
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using SportStats.Integracao.Config;
 using SportStats.Integracao.Modelos;
 using SportStats.Integracao.Opcoes;
+using SportStats.Integracao.Services;
+
 namespace SportStats.Integracao.PandaScore;
 
-// REST: autenticacao por Bearer (o token nao aparece na URL nem nos logs).
-// aplicando versao teste, provavelmente vou mudar por ser utlizar tokens em seu uso
-// WebSocket: so aceita o token na URL (?token=); por isso a URL nunca e registrada em log.
+// REST: Bearer (token fora da URL e dos logs). WebSocket: so aceita ?token= (URL nunca e registrada em log).
+// Cota: 429 pausa o provedor pelo Retry-After; 401/403 desliga ate reiniciar o app.
 public sealed class ProvedorPandaScore : IProvedorTempoReal
 {
     private static readonly TimeSpan ValidadeCache = TimeSpan.FromSeconds(15);
     private const int MaxFalhasSeguidas = 5;
+    private const string RotaAoVivo = "matches/running";
+    private const string RotaProximas = "matches/upcoming?sort=begin_at&page%5Bsize%5D=50";
+    private const string RotaPassadas = "matches/past?sort=-begin_at&page%5Bsize%5D=50";
 
     private readonly IHttpClientFactory _http;
     private readonly IMemoryCache _cache;
     private readonly IOptions<IntegracaoOptions> _opcoes;
+    private readonly IOptions<EsportsOptions> _esports;
+    private readonly ProviderStatusService _status;
     private readonly ILogger<ProvedorPandaScore> _log;
+    private volatile bool _autenticacaoFalhou;
 
-    public ProvedorPandaScore(IHttpClientFactory http, IMemoryCache cache, IOptions<IntegracaoOptions> opcoes, ILogger<ProvedorPandaScore> log)
+    public ProvedorPandaScore(IHttpClientFactory http, IMemoryCache cache, IOptions<IntegracaoOptions> opcoes,
+                              IOptions<EsportsOptions> esports, ProviderStatusService status, ILogger<ProvedorPandaScore> log)
     {
-        _http = http; _cache = cache; _opcoes = opcoes; _log = log;
+        _http = http; _cache = cache; _opcoes = opcoes; _esports = esports; _status = status; _log = log;
     }
 
     private PandaScoreOptions Opt => _opcoes.Value.PandaScore;
+    private string Token => (Opt.Token ?? "").Trim().Trim('"', '\'');
 
     public string Nome => "PandaScore";
-    public bool Habilitado => !string.IsNullOrWhiteSpace(Opt.Token);
+    public bool Configurado => !string.IsNullOrWhiteSpace(Token);
+    public bool AutenticacaoFalhou => _autenticacaoFalhou;
+    public bool Habilitado => Configurado && !_autenticacaoFalhou && _status.PandaScoreDisponivel;
     public bool AgendaBarata => false;
     public bool Atende(string modalidadeSlug) => Habilitado && modalidadeSlug is "lol" or "valorant" or "cs";
 
     public Task<IReadOnlyList<PartidaExterna>> ObterAoVivoAsync(CancellationToken ct = default) =>
-        BuscarAsync("matches/running", ct);
+        BuscarAsync(RotaAoVivo, ct);
 
     public async Task<IReadOnlyList<PartidaExterna>> ObterAgendaAsync(DateOnly data, CancellationToken ct = default)
     {
-        var proximas = await BuscarAsync("matches/upcoming", ct);
-        var passadas = await BuscarAsync("matches/past", ct);
+        var proximas = await BuscarAsync(RotaProximas, ct);
+        var passadas = await BuscarAsync(RotaPassadas, ct);
         return proximas.Concat(passadas)
             .Where(p => DateOnly.FromDateTime(p.IniciaEmUtc.ToLocalTime()) == data)
             .OrderBy(p => p.IniciaEmUtc)
@@ -54,7 +67,7 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
             var json = await _cache.GetOrCreateAsync($"panda:{rota}", async entrada =>
             {
                 entrada.AbsoluteExpirationRelativeToNow = ValidadeCache;
-                return await _http.CreateClient("pandascore").GetStringAsync(rota, ct);
+                return await BaixarAsync(rota, ct);
             });
             return json is null ? Array.Empty<PartidaExterna>() : Mapear(json);
         }
@@ -63,6 +76,47 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
         {
             _log.LogWarning("PandaScore {Rota}: {Mensagem}", rota, ex.Message);
             return Array.Empty<PartidaExterna>();
+        }
+    }
+
+    private async Task<string?> BaixarAsync(string rota, CancellationToken ct)
+    {
+        using var resposta = await _http.CreateClient("pandascore").GetAsync(rota, ct);
+        LerSaldo(resposta);
+
+        switch (resposta.StatusCode)
+        {
+            case HttpStatusCode.TooManyRequests:
+                var espera = CalcularEspera(resposta);
+                _status.MarcarLimiteAtingido(espera);
+                _log.LogWarning("PandaScore: limite de requisicoes atingido. Pausando por {Segundos} s.", (int)espera.TotalSeconds);
+                return null;
+
+            case HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden:
+                _autenticacaoFalhou = true;
+                _log.LogError("PandaScore recusou o token ({Codigo}). Provedor desligado ate reiniciar o app. Confira o token no painel e no user-secrets.", (int)resposta.StatusCode);
+                return null;
+        }
+
+        resposta.EnsureSuccessStatusCode();
+        return await resposta.Content.ReadAsStringAsync(ct);
+    }
+
+    private TimeSpan CalcularEspera(HttpResponseMessage resposta)
+    {
+        var ra = resposta.Headers.RetryAfter;
+        if (ra?.Delta is TimeSpan delta) return delta;
+        if (ra?.Date is DateTimeOffset data) return data - DateTimeOffset.UtcNow;
+        return TimeSpan.FromMinutes(Math.Max(1, _esports.Value.PandaScoreCooldownMinutes));
+    }
+
+    private void LerSaldo(HttpResponseMessage resposta)
+    {
+        if (resposta.Headers.TryGetValues("X-Rate-Limit-Remaining", out var valores) &&
+            int.TryParse(valores.FirstOrDefault(), out var restantes))
+        {
+            _status.AtualizarRestantes(restantes);
+            if (restantes < 50) _log.LogWarning("PandaScore: restam {Restantes} requisicoes nesta hora.", restantes);
         }
     }
 
@@ -152,14 +206,12 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
         return null;
     }
 
-    // ---- WebSocket (feed "frames": foto do jogo a cada ~2 s) ----
-    // Limite da PandaScore: 3 conexoes simultaneas por partida por endpoint.
-    // Os frames chegam como JSON bruto; converter em placar/eventos e a proxima etapa (BACKEND).
+    // ---- WebSocket (frames: foto do jogo a cada ~2 s). Limite: 3 conexoes por partida por endpoint. ----
     public async Task AssinarAsync(PartidaExterna partida, Func<string, Task> aoReceber, CancellationToken ct)
     {
         if (!Habilitado || string.IsNullOrWhiteSpace(partida.IdExterno)) return;
 
-        var uri = new Uri($"{Opt.LiveBaseUrl.TrimEnd('/')}/matches/{partida.IdExterno}?token={Uri.EscapeDataString(Opt.Token)}");
+        var uri = new Uri($"{Opt.LiveBaseUrl.TrimEnd('/')}/matches/{partida.IdExterno}?token={Uri.EscapeDataString(Token)}");
         var espera = TimeSpan.FromSeconds(2);
         var falhas = 0;
 
