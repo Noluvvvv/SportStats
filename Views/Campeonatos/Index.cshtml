@@ -1,0 +1,48 @@
+@model IEnumerable<Campeonato>
+@{
+    ViewData["Title"] = "Campeonatos";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Campeonatos</h1>
+        <a class="botao botao-vermelho" asp-action="Criar">Novo campeonato</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="vazio-caixa">Nenhum campeonato cadastrado.</p>
+    }
+    else
+    {
+        <div class="cartao">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Temporada</th>
+                        <th>Modalidade</th>
+                        <th class="col-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td>@c.Nome</td>
+                            <td>@c.Temporada</td>
+                            <td>@c.ModalidadeNome</td>
+                            <td class="col-acoes">
+                                <a class="botao" asp-action="Editar" asp-route-id="@c.Id">Editar</a>
+                                <form asp-action="Excluir" asp-route-id="@c.Id" method="post" class="form-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                                    <button type="submit" class="botao botao-perigo">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</main>

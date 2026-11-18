@@ -1,0 +1,49 @@
+@model IEnumerable<Time>
+@{
+    ViewData["Title"] = "Times";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Times</h1>
+        <a class="botao botao-vermelho" asp-action="Criar">Novo time</a>
+    </div>
+
+    @if (!Model.Any())
+    {
+        <p class="vazio-caixa">Nenhum time cadastrado.</p>
+    }
+    else
+    {
+        <div class="cartao">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Sigla</th>
+                        <th>Cidade</th>
+                        <th class="col-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var time in Model)
+                    {
+                        <tr>
+                            <td>@time.Nome</td>
+                            <td>@time.Sigla</td>
+                            <td>@time.Cidade</td>
+                            <td class="col-acoes">
+                                <a class="botao" asp-action="Editar" asp-route-id="@time.Id">Editar</a>
+                                @* Excluir é um formulário POST (um link comum seria GET e não pode apagar dados). *@
+                                <form asp-action="Excluir" asp-route-id="@time.Id" method="post" class="form-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir?');">
+                                    <button type="submit" class="botao botao-perigo">Excluir</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</main>
