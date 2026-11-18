@@ -1,0 +1,36 @@
+@model TimeFormViewModel
+@{
+    ViewData["Title"] = "Editar time";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Editar time</h1>
+    </div>
+
+    @* asp-route-id manda o Id do time na URL (/Times/Editar/5) *@
+    <form asp-action="Editar" asp-route-id="@Model.Id" method="post" class="formulario">
+        <div class="campo">
+            <label asp-for="Nome"></label>
+            <input asp-for="Nome" maxlength="80" />
+            <span asp-validation-for="Nome" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="Sigla"></label>
+            <input asp-for="Sigla" maxlength="4" />
+            <span asp-validation-for="Sigla" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="Cidade"></label>
+            <input asp-for="Cidade" maxlength="80" />
+            <span asp-validation-for="Cidade" class="campo-erro"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-vermelho">Salvar alterações</button>
+            <a class="botao" asp-action="Index">Cancelar</a>
+        </div>
+    </form>
+</main>
