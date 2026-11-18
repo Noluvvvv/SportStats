@@ -1,21 +1,21 @@
 using Microsoft.AspNetCore.Mvc;
 using SportStats.Integracao;
+using SportStats.Integracao.Services;
 
 namespace SportStats.Controllers;
 
-// Endpoints JSON para o front. Os dados vem das APIs (ESPN e PandaScore) via cache em memoria.
-// BACKEND: quando o Hub SignalR existir, o front deixa de consultar estes endpoints a cada ciclo.
+// Endpoints JSON de diagnostico e consumo. Os dados vem das APIs via cache em memoria.
 [ApiController]
 [Route("api/partidas")]
 public class IntegracaoController : ControllerBase
 {
     private readonly CachePartidasExternas _cache;
     private readonly RoteadorDeProvedores _roteador;
+    private readonly ProviderStatusService _status;
 
-    public IntegracaoController(CachePartidasExternas cache, RoteadorDeProvedores roteador)
+    public IntegracaoController(CachePartidasExternas cache, RoteadorDeProvedores roteador, ProviderStatusService status)
     {
-        _cache = cache;
-        _roteador = roteador;
+        _cache = cache; _roteador = roteador; _status = status;
     }
 
     // grupo: esportes | esports | (vazio = todos)
@@ -26,14 +26,22 @@ public class IntegracaoController : ControllerBase
     public IActionResult Agenda([FromQuery] string? grupo) => Ok(_cache.Agenda(grupo));
 
     [HttpGet("fontes")]
-    public IActionResult Fontes() => Ok(_roteador.Todos().Select(p => new
+    public IActionResult Fontes() => Ok(new
     {
-        p.Nome,
-        p.Habilitado,
-        UltimaAtualizacaoUtc = _cache.UltimaAtualizacao(p.Nome)
-    }));
+        provedores = _roteador.Todos().Select(p => new
+        {
+            p.Nome,
+            p.Habilitado,
+            UltimaAtualizacaoUtc = _cache.UltimaAtualizacao(p.Nome)
+        }),
+        pandaScore = new
+        {
+            disponivel = _status.PandaScoreDisponivel,
+            bloqueadoAteUtc = _status.BloqueadoAte,
+            requisicoesRestantes = _status.RequisicoesRestantes
+        }
+    });
 
-    // Ultimo frame bruto recebido pelo WebSocket da PandaScore (so se TempoRealWebSocket = true).
     [HttpGet("{fonte}/{id}/frame")]
     public IActionResult Frame(string fonte, string id)
     {
