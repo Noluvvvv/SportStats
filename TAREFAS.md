@@ -17,3 +17,12 @@ Regras do grupo:
 - Cada um commita com o proprio usuario do git (o professor confere o historico).
 - Cada integrante precisa saber explicar o codigo da sua tarefa na arguicao.
 - Ao terminar uma tarefa, apagar o TODO correspondente e marcar aqui.
+## Atualizacao (integracao, usuarios e pendencias)
+
+| ID | Tarefa | Arquivos | Responsavel |
+|---|---|---|---|
+| BACK-05 | Provedores ESPN/PandaScore, cache, SignalR e /Esports: feito. Falta confirmar ligas e pausar polling sem clientes | Integracao/, Hubs/ | |
+| BACK-08 | Usuario, login e preferencias (hash de senha, transacao Usuario + Preferencia) | Database/script.sql, Controllers/ | |
+| BACK-09 | Favoritos, historico e notificacoes (por Tipo + Fonte + IdExterno) | Repositories/, Services/, Views/ | |
+| BACK-10 | (futuro) Iframe do Flashscore em /Esports | Views/Esports | |
+| BACK-11 | (futuro) Rever o uso da PandaScore sem token / 401 | Integracao/PandaScore | |
