@@ -163,13 +163,12 @@ notificações e histórico.
 
 ## 👥 Equipe
 
-  Integrante                        Registro Acadêmico
-  -------------------------------- --------------------
-  Ângelo Avezum Marques da Silva      2840482511017 <br>
-  Gabriel Henrique dos Santos Lopes   xxxxxxxxxxxxx <br>
-  Maxwell Carlos Silverio             xxxxxxxxxxxxx <br>
-  Saulo da Silva Stuque Menegucci     xxxxxxxxxxxxx <br>
-------------------------------------------------------------------------
+| Integrante | RA |
+|---|---|
+| Ângelo Avezum Marques da Silva | 2840482511017 |
+| Gabriel Henrique dos Santos Lopes | *preencher* |
+| Maxwell Carlos Silverio | *preencher* |
+| Saulo da Silva Stuque Menegucci | *preencher* |
 
 
 **SportStats** · Projeto acadêmico de Programação Orientada a Objetos
