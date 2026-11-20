@@ -165,11 +165,10 @@ notificações e histórico.
 
   Integrante                        Registro Acadêmico
   -------------------------------- --------------------
-  Ângelo Avezum Marques da Silva      2840482511017
-  Gabriel Henrique dos Santos Lopes   xxxxxxxxxxxxx
-  Maxwell Carlos Silverio             xxxxxxxxxxxxx
-  Saulo da Silva Stuque Menegucci     xxxxxxxxxxxxx
-
+  Ângelo Avezum Marques da Silva      2840482511017 <br>
+  Gabriel Henrique dos Santos Lopes   xxxxxxxxxxxxx <br>
+  Maxwell Carlos Silverio             xxxxxxxxxxxxx <br>
+  Saulo da Silva Stuque Menegucci     xxxxxxxxxxxxx <br>
 ------------------------------------------------------------------------
 
 
