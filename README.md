@@ -1,4 +1,4 @@
-::: {align="center"}
+
 # SportStats
 
 ### Acompanhe partidas, placares e competições de esportes e e-sports.
@@ -172,6 +172,6 @@ notificações e histórico.
 
 ------------------------------------------------------------------------
 
-::: {align="center"}
+
 **SportStats** · Projeto acadêmico de Programação Orientada a Objetos
-:::
+
