@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<IDbConnectionFactory, MySqlConnectionFactory>();
+builder.Services.AddScoped<IPartidaConsultaRepository, PartidaConsultaRepository>();
 builder.Services.AddScoped<IRepository<Time>, TimeRepository>();
 builder.Services.AddScoped<IRepository<Campeonato>, CampeonatoRepository>();
 builder.Services.AddScoped<IModalidadeRepository, ModalidadeRepository>();
