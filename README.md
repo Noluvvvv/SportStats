@@ -27,18 +27,18 @@ real por meio de **SignalR**.
 
 ## 🧰 Tecnologias utilizadas
 
-  Técnologia                          Utilização
-  ----------------------------------- -------------------------------------
-  C# / .NET 10                        Linguagem e plataforma da aplicação
-  ASP.NET Core MVC                    Aplicação web, controllers e views
-  Razor                               Renderização das páginas
-  MySQL                               Banco de dados relacional
-  Dapper                              Acesso e persistência de dados
-  MySqlConnector                      Conexão com o MySQL
-  SignalR                             Comunicação em tempo real
-  ESPN API                            Fonte externa de dados esportivos
-  PandaScore API                      Fonte externa de dados de e-sports
-  HTML, CSS, JavaScript e Bootstrap   Interface da aplicação
+| Tecnologia | Utilização |
+|---|---|
+| C# / .NET 10 | Linguagem e plataforma da aplicação |
+| ASP.NET Core MVC | Aplicação web, controllers e views |
+| Razor | Renderização das páginas |
+| MySQL | Banco de dados relacional |
+| Dapper | Acesso e persistência de dados |
+| MySqlConnector | Conexão com o MySQL |
+| SignalR | Comunicação em tempo real |
+| ESPN API | Fonte externa de dados esportivos |
+| PandaScore API | Fonte externa de dados de e-sports |
+| HTML, CSS, JavaScript e Bootstrap | Interface da aplicação |
 
 ## 🏗️ Organização do projeto
 
