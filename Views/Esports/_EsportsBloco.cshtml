@@ -1,0 +1,84 @@
+@using SportStats.Integracao.Modelos
+@model SportStats.Models.Esports.EsportsBloco
+
+<section class="bloco">
+    <h2 class="bloco-titulo">
+        @if (Model.Destaque)
+        {
+            <span class="pulso" aria-hidden="true"></span>
+        }
+        @Model.Titulo
+    </h2>
+
+    @if (!Model.Partidas.Any())
+    {
+        <p class="vazio vazio-caixa">@Model.Vazio</p>
+    }
+    else
+    {
+        @foreach (var grupo in Model.Partidas.GroupBy(p => p.Campeonato))
+        {
+            <div class="campeonato">
+                <h3 class="campeonato-nome">@grupo.Key</h3>
+                @foreach (var p in grupo)
+                {
+                    var aoVivo = p.Status == StatusPartidaExterna.AoVivo;
+                    var agendada = p.Status == StatusPartidaExterna.Agendada;
+                    <div class="jogo @(aoVivo ? "jogo-ao-vivo" : "")">
+                        <span class="jogo-status">
+                            @if (aoVivo)
+                            {
+                                <span class="status-vivo"><span class="pulso" aria-hidden="true"></span>AO VIVO</span>
+                                @if (!string.IsNullOrEmpty(p.Detalhe))
+                                {
+                                    <small class="formato">@p.Detalhe</small>
+                                }
+                            }
+                            else if (p.Status == StatusPartidaExterna.Encerrada)
+                            {
+                                <span>Encerrado</span>
+                            }
+                            else if (p.Status == StatusPartidaExterna.Adiada)
+                            {
+                                <span>Adiado</span>
+                            }
+                            else if (p.Status == StatusPartidaExterna.Cancelada)
+                            {
+                                <span>Cancelado</span>
+                            }
+                            else
+                            {
+                                <span>@p.IniciaEmUtc.ToLocalTime().ToString("dd/MM HH:mm")</span>
+                            }
+                            @if (p.MelhorDe is int md && md > 0)
+                            {
+                                <small class="formato">MD@(md)</small>
+                            }
+                        </span>
+
+                        <span class="time time-casa">
+                            <span class="nome">@p.Casa.Nome</span>
+                            <abbr class="sigla" title="@p.Casa.Nome">@p.Casa.Sigla</abbr>
+                        </span>
+
+                        <span class="placar">
+                            @if (agendada)
+                            {
+                                <span class="vs">vs</span>
+                            }
+                            else
+                            {
+                                <b data-placar-casa="@p.Chave">@p.PlacarCasa</b><i>-</i><b data-placar-fora="@p.Chave">@p.PlacarFora</b>
+                            }
+                        </span>
+
+                        <span class="time time-fora">
+                            <span class="nome">@p.Fora.Nome</span>
+                            <abbr class="sigla" title="@p.Fora.Nome">@p.Fora.Sigla</abbr>
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+    }
+</section>

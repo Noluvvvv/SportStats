@@ -1,3 +1,5 @@
+using SportStats.Hubs;
+using SportStats.Integracao;
 using SportStats.Models;
 using SportStats.Repositories.Dapper;
 using SportStats.Repositories.Interfaces;
@@ -12,6 +14,8 @@ builder.Services.AddScoped<IRepository<Campeonato>, CampeonatoRepository>();
 builder.Services.AddScoped<IModalidadeRepository, ModalidadeRepository>();
 builder.Services.AddScoped<IPartidaRepository, PartidaRepository>();
 builder.Services.AddScoped<IRepository<Partida>>(sp => sp.GetRequiredService<IPartidaRepository>());
+
+builder.Services.AddIntegracaoEsportiva(builder.Configuration);
 
 var app = builder.Build();
 
@@ -28,5 +32,7 @@ app.UseAuthorization();
 app.MapStaticAssets();
 app.MapControllerRoute(name: "default", pattern: "{controller=Home}/{action=Index}/{id?}")
    .WithStaticAssets();
+
+app.MapHub<PlacarHub>("/hubs/placar");
 
 app.Run();
