@@ -1,0 +1,16 @@
+@model List<PartidaResumo>
+@{
+    ViewData["Title"] = "Partidas";
+
+    // Reaproveita o bloco de partidas (e o card de cada jogo) já usado na Home.
+    var bloco = new BlocoPartidas("Todas as partidas", Model, "Nenhuma partida cadastrada.");
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Partidas</h1>
+        <a class="botao botao-vermelho" asp-action="Criar">Nova partida</a>
+    </div>
+
+    <partial name="_BlocoPartidas" model="bloco" />
+</main>

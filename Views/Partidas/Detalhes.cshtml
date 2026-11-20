@@ -1,0 +1,109 @@
+@model PartidaDetalhesViewModel
+@{
+    var p = Model.Partida;
+    var r = Model.Retrospecto;
+    ViewData["Title"] = $"{p.TimeCasa} x {p.TimeFora}";
+
+    var status = p.Encerrada ? "Encerrada" : p.AoVivo ? "Ao vivo" : "Agendada";
+
+    // O que o placar representa depende do esporte.
+    var unidade = p.Tipo switch
+    {
+        "Volei" => "sets",
+        "Esport" => "mapas",
+        "Basquete" => "pontos",
+        _ => "gols"
+    };
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Detalhes da partida</h1>
+        <a class="botao" asp-action="Index">Voltar</a>
+    </div>
+
+    @* ---------- Cabeçalho da partida ---------- *@
+    <div class="cartao">
+        <p class="sub">@p.Campeonato - @p.Modalidade</p>
+        <h2>
+            @p.TimeCasa
+            <span class="placar"><b>@p.PlacarCasa</b><i>-</i><b>@p.PlacarFora</b></span>
+            @p.TimeFora
+        </h2>
+        <p class="vazio">
+            @status - @p.DataHora.ToString("dd/MM/yyyy HH:mm")
+            @if (p.Formato is not null)
+            {
+                <text> - Formato @p.Formato</text>
+            }
+        </p>
+    </div>
+
+    @* ---------- Ações (só enquanto a partida não foi encerrada) ---------- *@
+    @if (!p.Encerrada)
+    {
+        <h2 class="coluna-titulo">Registrar placar (@unidade)</h2>
+        <form asp-action="RegistrarPlacar" asp-route-id="@p.Id" method="post" class="formulario">
+            <div class="campo">
+                <label for="casa">@p.TimeCasa</label>
+                <input type="number" id="casa" name="casa" min="0" value="@p.PlacarCasa" required />
+            </div>
+            <div class="campo">
+                <label for="fora">@p.TimeFora</label>
+                <input type="number" id="fora" name="fora" min="0" value="@p.PlacarFora" required />
+            </div>
+            <div class="formulario-acoes">
+                <button type="submit" class="botao botao-vermelho">Salvar placar</button>
+            </div>
+        </form>
+
+        <form asp-action="Encerrar" asp-route-id="@p.Id" method="post" class="form-inline"
+              onsubmit="return confirm('Encerrar a partida? Depois disso o placar não poderá mais ser alterado.');">
+            <button type="submit" class="botao">Encerrar partida</button>
+        </form>
+    }
+
+    @* ---------- Retrospecto entre os dois times ---------- *@
+    <h2 class="coluna-titulo">Retrospecto entre os times</h2>
+    @if (r.Jogos == 0)
+    {
+        <p class="vazio-caixa">Os dois times ainda não têm outros jogos encerrados entre si.</p>
+    }
+    else
+    {
+        <div class="cartao">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Jogos</th>
+                        <th>Vitórias @p.TimeCasa</th>
+                        <th>Empates</th>
+                        <th>Vitórias @p.TimeFora</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@r.Jogos</td>
+                        <td>@r.VitoriasCasa</td>
+                        <td>@r.Empates</td>
+                        <td>@r.VitoriasFora</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h3 class="coluna-titulo">Últimos confrontos</h3>
+        <div class="campeonato">
+            @foreach (var jogo in r.Ultimos)
+            {
+                <partial name="_PartidaCard" model="jogo" />
+            }
+        </div>
+    }
+
+    @* ---------- Excluir ---------- *@
+    <form asp-action="Excluir" asp-route-id="@p.Id" method="post" class="form-inline"
+          onsubmit="return confirm('Tem certeza que deseja excluir esta partida?');">
+        <button type="submit" class="botao botao-perigo">Excluir partida</button>
+    </form>
+</main>

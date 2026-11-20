@@ -1,0 +1,80 @@
+@model PartidaFormViewModel
+@{
+    ViewData["Title"] = "Nova partida";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Nova partida</h1>
+    </div>
+
+    <form asp-action="Criar" method="post" class="formulario">
+        <div class="campo">
+            <label asp-for="Tipo"></label>
+            @* asp-items = lista de opções montada pelo controller *@
+            <select asp-for="Tipo" asp-items="Model.Tipos"></select>
+            <span asp-validation-for="Tipo" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="CampeonatoId"></label>
+            <select asp-for="CampeonatoId" asp-items="Model.Campeonatos">
+                <option value="0">Escolha um campeonato...</option>
+            </select>
+            <span asp-validation-for="CampeonatoId" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="TimeCasaId"></label>
+            <select asp-for="TimeCasaId" asp-items="Model.Times">
+                <option value="0">Escolha o time da casa...</option>
+            </select>
+            <span asp-validation-for="TimeCasaId" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="TimeForaId"></label>
+            <select asp-for="TimeForaId" asp-items="Model.Times">
+                <option value="0">Escolha o time visitante...</option>
+            </select>
+            <span asp-validation-for="TimeForaId" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="DataHora"></label>
+            <input asp-for="DataHora" />
+            <span asp-validation-for="DataHora" class="campo-erro"></span>
+        </div>
+
+        @* Este campo só aparece quando o tipo escolhido é E-sport (veja o script lá embaixo). *@
+        <div class="campo" id="campo-melhor-de">
+            <label asp-for="MelhorDe"></label>
+            <select asp-for="MelhorDe">
+                <option value="1">Melhor de 1 mapa</option>
+                <option value="3">Melhor de 3 mapas</option>
+                <option value="5">Melhor de 5 mapas</option>
+            </select>
+            <span asp-validation-for="MelhorDe" class="campo-erro"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-vermelho">Salvar</button>
+            <a class="botao" asp-action="Index">Cancelar</a>
+        </div>
+    </form>
+</main>
+
+@section Scripts {
+    <script>
+        // Mostra o campo "Formato" só para E-sport.
+        const tipo = document.getElementById("Tipo");
+        const campoMelhorDe = document.getElementById("campo-melhor-de");
+
+        function atualizarFormato() {
+            campoMelhorDe.style.display = tipo.value === "Esport" ? "" : "none";
+        }
+
+        tipo.addEventListener("change", atualizarFormato);
+        atualizarFormato();
+    </script>
+}

@@ -1,8 +1,7 @@
 @model PartidaResumo
 
-@* BACKEND: trocar href="#" pela pagina de detalhes (ex.: /Partidas/Detalhes/{id})
-   com estatisticas dos atletas, retrospecto e eventos da partida. (BACK-02) *@
-<a class="jogo @(Model.AoVivo ? "jogo-ao-vivo" : "")" href="#">
+@* Link para a pagina de detalhes da partida (/Partidas/Detalhes/{id}). *@
+<a class="jogo @(Model.AoVivo ? "jogo-ao-vivo" : "")" asp-controller="Partidas" asp-action="Detalhes" asp-route-id="@Model.Id">
     <span class="jogo-status">
         @if (Model.AoVivo)
         {
