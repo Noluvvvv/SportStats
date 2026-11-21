@@ -42,6 +42,17 @@ public class Transferencia
         DataFim = dataFim;
     }
 
+    internal void DefinirId(int id)
+    {
+        if (id <= 0)
+            throw new DominioException("O ID da transferência é inválido.");
+
+        if (Id > 0)
+            throw new DominioException("A transferência já possui um ID.");
+
+        Id = id;
+    }
+
     internal Transferencia(
         int id,
         int atletaId,
