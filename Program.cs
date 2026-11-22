@@ -14,6 +14,8 @@ builder.Services.AddScoped<IRepository<Campeonato>, CampeonatoRepository>();
 builder.Services.AddScoped<IModalidadeRepository, ModalidadeRepository>();
 builder.Services.AddScoped<IPartidaRepository, PartidaRepository>();
 builder.Services.AddScoped<IRepository<Partida>>(sp => sp.GetRequiredService<IPartidaRepository>());
+builder.Services.AddScoped<IRepository<Atleta>, AtletaRepository>();
+builder.Services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
 
 builder.Services.AddIntegracaoEsportiva(builder.Configuration);
 

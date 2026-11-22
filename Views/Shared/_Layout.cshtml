@@ -1,6 +1,9 @@
 @{
     var controllerAtual = ViewContext.RouteData.Values["controller"] as string ?? "";
-    var emCadastro = controllerAtual is "Times" or "Campeonatos";
+    var emCadastro = controllerAtual is "Times" or "Campeonatos" or "Atletas";
+
+
+
 
     var grupo = ViewData["Grupo"] as string ?? (emCadastro ? "" : "esportes");
 }
@@ -25,6 +28,7 @@
         <nav class="cadastros" aria-label="Cadastros">
             <a class="grupo @(controllerAtual == "Times" ? "ativo" : "")" asp-controller="Times" asp-action="Index">Times</a>
             <a class="grupo @(controllerAtual == "Campeonatos" ? "ativo" : "")" asp-controller="Campeonatos" asp-action="Index">Campeonatos</a>
+            <a class="grupo @(controllerAtual == "Atletas" ? "ativo" : "")" asp-controller="Atletas" asp-action="Index">Atletas</a>
         </nav>
 
         <nav class="grupos" aria-label="Categorias">

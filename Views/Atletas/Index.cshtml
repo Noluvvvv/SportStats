@@ -1,0 +1,80 @@
+
+@model AtletaIndexViewModel
+
+@{
+    ViewData["Title"] = "Atletas";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Atletas</h1>
+        <a class="botao botao-vermelho" asp-action="Criar">Novo atleta</a>
+    </div>
+
+    @if (!Model.Atletas.Any())
+    {
+        <p class="vazio-caixa">Nenhum atleta cadastrado.</p>
+    }
+    else
+    {
+        <div class="cartao">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Nickname</th>
+                        <th>Nacionalidade</th>
+                        <th>Modalidade</th>
+                        <th>Histórico de times</th>
+                        <th class="col-acoes">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var atleta in Model.Atletas)
+                    {
+                        <tr>
+                            <td>@atleta.Nome</td>
+                            <td>@(atleta.Nickname ?? "-")</td>
+                            <td>@atleta.Nacionalidade</td>
+                            <td>@atleta.ModalidadeNome</td>
+                            <td>
+                                @if (!atleta.Historico.Any())
+                                {
+                                    <span>Sem histórico</span>
+                                }
+                                else
+                                {
+                                    @foreach (var transferencia in atleta.Historico)
+                                    {
+                                        <div>
+                                            <strong>@transferencia.NomeTime</strong>
+                                            <br />
+                                            @transferencia.DataInicio.ToString("dd/MM/yyyy")
+                                            até
+                                            @(transferencia.DataFim?.ToString("dd/MM/yyyy") ?? "Atual")
+                                        </div>
+                                    }
+                                }
+                            </td>
+                            <td class="col-acoes">
+                                <a class="botao" asp-action="Editar"
+                                   asp-route-id="@atleta.Id">Editar</a>
+
+                                <a class="botao" asp-action="Transferir"
+                                   asp-route-id="@atleta.Id">Transferir</a>
+
+                                <form asp-action="Excluir" asp-route-id="@atleta.Id"
+                                      method="post" class="form-inline"
+                                      onsubmit="return confirm('Tem certeza que deseja excluir este atleta?');">
+                                    <button type="submit" class="botao botao-perigo">
+                                        Excluir
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</main>
