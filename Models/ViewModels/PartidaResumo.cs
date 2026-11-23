@@ -9,6 +9,8 @@ public class PartidaResumo
     public int CampeonatoId { get; set; }
     public string Campeonato { get; set; } = "";
     public string Modalidade { get; set; } = "";
+    public string ModalidadeGrupo { get; set; } = "";
+    public string ModalidadeSlug { get; set; } = "";
     public string Tipo { get; set; } = "";
     public string TimeCasa { get; set; } = "";
     public string SiglaCasa { get; set; } = "";
@@ -34,6 +36,6 @@ public class CompeticaoItem
     public string Nome { get; set; } = "";
     public int Temporada { get; set; }
     public string Modalidade { get; set; } = "";
-
-    public string ModalidadeSlug => CatalogoModalidades.PorNome(Modalidade)?.Slug ?? "";
+    public string ModalidadeGrupo { get; set; } = "";
+    public string ModalidadeSlug { get; set; } = "";
 }

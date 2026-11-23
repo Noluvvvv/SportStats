@@ -13,6 +13,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
     // em vez de só os números (Ids) que existem na tabela Partida.
     private const string SelectResumo = @"
         SELECT p.Id, p.CampeonatoId, c.Nome AS Campeonato, m.Nome AS Modalidade, p.Tipo,
+               m.Grupo AS ModalidadeGrupo, m.Slug AS ModalidadeSlug,
                tc.Nome AS TimeCasa, tc.Sigla AS SiglaCasa,
                tf.Nome AS TimeFora, tf.Sigla AS SiglaFora,
                p.DataHora, p.PlacarCasa, p.PlacarFora, p.Encerrada, p.MelhorDe
@@ -46,7 +47,8 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
     {
         using var con = _factory.Criar();
         return con.Query<CompeticaoItem>(
-            @"SELECT c.Id, c.Nome, c.Temporada, m.Nome AS Modalidade
+            @"SELECT c.Id, c.Nome, c.Temporada, m.Nome AS Modalidade,
+                     m.Grupo AS ModalidadeGrupo, m.Slug AS ModalidadeSlug
               FROM Campeonato c
               JOIN Modalidade m ON m.Id = c.ModalidadeId
               ORDER BY m.Nome, c.Nome").ToList();
