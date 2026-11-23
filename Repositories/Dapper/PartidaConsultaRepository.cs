@@ -1,3 +1,4 @@
+using SportStats.Models.Enums;
 using SportStats.Models.ViewModels;
 using SportStats.Repositories.Interfaces;
 using global::Dapper;
@@ -16,7 +17,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
                m.Grupo AS ModalidadeGrupo, m.Slug AS ModalidadeSlug,
                tc.Nome AS TimeCasa, tc.Sigla AS SiglaCasa,
                tf.Nome AS TimeFora, tf.Sigla AS SiglaFora,
-               p.DataHora, p.PlacarCasa, p.PlacarFora, p.Encerrada, p.MelhorDe
+               p.DataHora, p.PlacarCasa, p.PlacarFora, p.Status, p.Minuto, p.MelhorDe
         FROM Partida p
         JOIN Campeonato c ON c.Id = p.CampeonatoId
         JOIN Modalidade m ON m.Id = c.ModalidadeId
@@ -27,7 +28,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
     // O texto do SQL é fixo; os VALORES entram sempre por parâmetro (@timeCasaId...),
     // nunca colados no texto: isso evita SQL Injection.
     private const string FiltroConfronto = @"
-        p.Encerrada = 1 AND p.Id <> @partidaId
+        p.Status = @statusEncerrada AND p.Id <> @partidaId
         AND ((p.TimeCasaId = @timeCasaId AND p.TimeForaId = @timeForaId)
           OR (p.TimeCasaId = @timeForaId AND p.TimeForaId = @timeCasaId))";
 
@@ -66,7 +67,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
     public RetrospectoConfronto ObterRetrospecto(int partidaId, int timeCasaId, int timeForaId)
     {
         using var con = _factory.Criar();
-        var parametros = new { partidaId, timeCasaId, timeForaId };
+        var parametros = new { partidaId, timeCasaId, timeForaId, statusEncerrada = nameof(StatusPartida.Encerrada) };
 
         // 1) Contagem: o banco soma vitórias de cada time e empates.
         //    Um time vence quando joga em casa com placar maior OU fora com placar maior.

@@ -8,8 +8,9 @@ public class PartidaEsport : Partida
     private readonly int _melhorDe;
 
     public PartidaEsport(int campeonatoId, int timeCasaId, int timeForaId, DateTime dataHora, int melhorDe,
-                         int id = 0, int placarCasa = 0, int placarFora = 0, bool encerrada = false)
-        : base(campeonatoId, timeCasaId, timeForaId, dataHora, id, placarCasa, placarFora, encerrada)
+                         int id = 0, int placarCasa = 0, int placarFora = 0,
+                         StatusPartida status = StatusPartida.Agendada, int? minuto = null)
+        : base(campeonatoId, timeCasaId, timeForaId, dataHora, id, placarCasa, placarFora, status, minuto)
     {
         if (melhorDe is not (1 or 3 or 5))
             throw new PlacarInvalidoException("O formato deve ser melhor de 1, 3 ou 5 mapas.");

@@ -12,16 +12,23 @@ public abstract class Partida
     public DateTime DataHora { get; private set; }
     public int PlacarCasa { get; private set; }
     public int PlacarFora { get; private set; }
-    public bool Encerrada { get; private set; }
+    public StatusPartida Status { get; private set; }
+    public int? Minuto { get; }
+    public bool Encerrada => Status == StatusPartida.Encerrada;
 
     public abstract TipoPartida Tipo { get; }
     public virtual int MelhorDe => 0;
 
     protected Partida(int campeonatoId, int timeCasaId, int timeForaId, DateTime dataHora,
-                      int id, int placarCasa, int placarFora, bool encerrada)
+                      int id, int placarCasa, int placarFora, StatusPartida status, int? minuto)
     {
         if (timeCasaId == timeForaId)
             throw new EscalacaoInvalidaException("Um time não pode jogar contra ele mesmo.");
+
+        if (!Enum.IsDefined(status))
+            throw new ArgumentOutOfRangeException(nameof(status));
+        if (minuto is int minutoInformado)
+            ArgumentOutOfRangeException.ThrowIfNegative(minutoInformado, nameof(minuto));
 
         Id = id;
         CampeonatoId = campeonatoId;
@@ -30,7 +37,8 @@ public abstract class Partida
         DataHora = dataHora;
         PlacarCasa = placarCasa;
         PlacarFora = placarFora;
-        Encerrada = encerrada;
+        Status = status;
+        Minuto = minuto;
     }
 
     public void RegistrarPlacar(int casa, int fora)
@@ -47,7 +55,7 @@ public abstract class Partida
     {
         if (Encerrada) throw new PartidaEncerradaException();
         ValidarPlacarFinal();
-        Encerrada = true;
+        Status = StatusPartida.Encerrada;
     }
 
     public int? DefinirVencedorId() =>
