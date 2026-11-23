@@ -36,6 +36,7 @@ grep -RnE "TODO \[BACK-" --include="*.cs" --include="*.cshtml" --include="*.js" 
 | ID | Situação |
 |---|---|
 | BACK-03 | Implementação realizada e testada. Dois commits enviados para a branch `feature/back-03-atleta-transferencia`. Pull Request pendente de criação e revisão. R4 parcialmente atendido: falta ajustar o feedback da exclusão de atleta com histórico. |
+| BACK-09 | Em andamento. Repositórios de favoritos, histórico de visualizações e persistência de notificações implementados e cobertos por [testes de integração com MySQL](tests/SportStats.IntegrationTests/README.md). A integração MVC depende da identificação do usuário pelo BACK-08. A geração automática de notificações depende da definição dos eventos externos e das preferências do BACK-08. |
 
 ## Atualização (integração, usuários e pendências)
 
