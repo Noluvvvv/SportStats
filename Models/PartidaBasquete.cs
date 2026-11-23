@@ -6,8 +6,9 @@ namespace SportStats.Models;
 public class PartidaBasquete : Partida
 {
     public PartidaBasquete(int campeonatoId, int timeCasaId, int timeForaId, DateTime dataHora,
-                           int id = 0, int placarCasa = 0, int placarFora = 0, bool encerrada = false)
-        : base(campeonatoId, timeCasaId, timeForaId, dataHora, id, placarCasa, placarFora, encerrada) { }
+                           int id = 0, int placarCasa = 0, int placarFora = 0,
+                           StatusPartida status = StatusPartida.Agendada, int? minuto = null)
+        : base(campeonatoId, timeCasaId, timeForaId, dataHora, id, placarCasa, placarFora, status, minuto) { }
 
     public override TipoPartida Tipo => TipoPartida.Basquete;
 

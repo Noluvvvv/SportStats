@@ -15,6 +15,7 @@
 //    IPartidaConsultaRepository, com SQL parametrizado).
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using SportStats.Exceptions;
 using SportStats.Models;
@@ -90,32 +91,33 @@ namespace SportStats.Controllers
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult RegistrarPlacar(int id, int casa, int fora)
+        public IActionResult Iniciar(int id) =>
+            AtualizarPartida(id, partida => partida.Iniciar(), "Partida iniciada.");
+
+        [HttpPost, ValidateAntiForgeryToken]
+        public IActionResult RegistrarPlacar(int id, [BindRequired] int casa, [BindRequired] int fora, int? minuto = null)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var partida = _partidaRepository.ObterPorId(id);
-                if (partida is null)
-                {
-                    TempData["Erro"] = "Partida não encontrada.";
-                    return RedirectToAction(nameof(Index));
-                }
-
-                partida.RegistrarPlacar(casa, fora);   
-                _partidaRepository.Atualizar(partida); 
-
-                TempData["Sucesso"] = "Placar atualizado.";
+                TempData["Erro"] = "Informe um placar válido e, se preenchido, um minuto inteiro.";
+                return RedirectToAction(nameof(Detalhes), new { id });
             }
-            catch (DominioException ex)
+
+            // Campo ausente preserva o minuto. Campo enviado em branco limpa o valor.
+            var minutoInformado = minuto.HasValue || ModelState.ContainsKey(nameof(minuto));
+            return AtualizarPartida(id, partida =>
             {
-                
-                TempData["Erro"] = ex.Message;
-            }
-            return RedirectToAction(nameof(Detalhes), new { id });
+                if (minutoInformado)
+                    partida.AtualizarMinuto(minuto);
+                partida.RegistrarPlacar(casa, fora);
+            }, "Placar atualizado.");
         }
 
         [HttpPost, ValidateAntiForgeryToken]
-        public IActionResult Encerrar(int id)
+        public IActionResult Encerrar(int id) =>
+            AtualizarPartida(id, partida => partida.Encerrar(), "Partida encerrada.");
+
+        private IActionResult AtualizarPartida(int id, Action<Partida> alterar, string mensagemSucesso)
         {
             try
             {
@@ -126,10 +128,10 @@ namespace SportStats.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                partida.Encerrar();                   
+                alterar(partida);
                 _partidaRepository.Atualizar(partida);
 
-                TempData["Sucesso"] = "Partida encerrada.";
+                TempData["Sucesso"] = mensagemSucesso;
             }
             catch (DominioException ex)
             {

@@ -12,6 +12,6 @@ public class ModalidadeRepository : IModalidadeRepository
     public IEnumerable<ModalidadeItem> ObterTodas()
     {
         using var con = _factory.Criar();
-        return con.Query<ModalidadeItem>("SELECT Id, Nome FROM Modalidade ORDER BY Nome").ToList();
+        return con.Query<ModalidadeItem>("SELECT Id, Nome, Grupo, Slug FROM Modalidade ORDER BY Nome").ToList();
     }
 }

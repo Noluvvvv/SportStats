@@ -11,7 +11,10 @@ USE sportstats;
 
 CREATE TABLE Modalidade (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Nome VARCHAR(50) NOT NULL UNIQUE
+    Nome VARCHAR(50) NOT NULL UNIQUE,
+    Grupo VARCHAR(10) NOT NULL,
+    Slug VARCHAR(20) NOT NULL UNIQUE,
+    CONSTRAINT ck_modalidade_grupo CHECK (CAST(Grupo AS BINARY) IN ('esportes', 'esports'))
 );
 
 CREATE TABLE Campeonato (
@@ -65,8 +68,11 @@ CREATE TABLE Partida (
     DataHora DATETIME NOT NULL,
     PlacarCasa INT NOT NULL DEFAULT 0,
     PlacarFora INT NOT NULL DEFAULT 0,
-    Encerrada TINYINT(1) NOT NULL DEFAULT 0,
+    Status VARCHAR(9) NOT NULL DEFAULT 'Agendada',
+    Minuto INT NULL,
     MelhorDe INT NOT NULL DEFAULT 0,
+    CONSTRAINT ck_partida_status CHECK (CAST(Status AS BINARY) IN ('Agendada', 'AoVivo', 'Encerrada')),
+    CONSTRAINT ck_partida_minuto CHECK (Minuto IS NULL OR Minuto >= 0),
     FOREIGN KEY (CampeonatoId) REFERENCES Campeonato(Id),
     FOREIGN KEY (TimeCasaId) REFERENCES `Time`(Id),
     FOREIGN KEY (TimeForaId) REFERENCES `Time`(Id)
@@ -112,8 +118,13 @@ CREATE TABLE EstatisticaCsGo (
     FOREIGN KEY (AtletaId) REFERENCES Atleta(Id)
 );
 
-INSERT INTO Modalidade (Nome) VALUES
-('Futebol'), ('Basquete'), ('Vôlei'), ('Valorant'), ('Counter-Strike'), ('League of Legends');
+INSERT INTO Modalidade (Nome, Grupo, Slug) VALUES
+('Futebol', 'esportes', 'futebol'),
+('Basquete', 'esportes', 'basquete'),
+('Vôlei', 'esportes', 'volei'),
+('Valorant', 'esports', 'valorant'),
+('Counter-Strike', 'esports', 'cs'),
+('League of Legends', 'esports', 'lol');
 
 INSERT INTO Campeonato (Nome, Temporada, ModalidadeId) VALUES
 ('Liga Nacional', 2026, 1),
@@ -174,26 +185,25 @@ INSERT INTO Transferencia (AtletaId, TimeId, DataInicio, DataFim) VALUES
 (13, 8, '2025-08-01', NULL),
 (16, 8, '2025-09-10', NULL);
 
--- Partidas encerradas (datas fixas) e partidas com NOW() para demonstrar "ao vivo" e "agendadas".
--- "Ao vivo" = nao encerrada e iniciada ha menos de 3 horas. Rode o script de novo para renovar a demonstracao.
-INSERT INTO Partida (CampeonatoId, TimeCasaId, TimeForaId, Tipo, DataHora, PlacarCasa, PlacarFora, Encerrada, MelhorDe) VALUES
-(1, 1, 2, 'Futebol',  '2026-10-20 16:00:00', 2, 1, 1, 0),
-(1, 3, 4, 'Futebol',  '2026-10-20 18:30:00', 0, 0, 1, 0),
-(1, 1, 3, 'Futebol',  '2026-10-27 16:00:00', 1, 0, 1, 0),
-(2, 2, 4, 'Futebol',  NOW() + INTERVAL 2 DAY, 0, 0, 0, 0),
-(3, 5, 6, 'Basquete', '2026-10-25 20:00:00', 98, 91, 1, 0),
-(4, 3, 4, 'Volei',    '2026-10-26 21:00:00', 3, 1, 1, 0),
-(5, 7, 8, 'Esport',   '2026-10-28 19:30:00', 2, 1, 1, 3),
-(6, 8, 7, 'Esport',   NOW() + INTERVAL 2 DAY, 0, 0, 0, 1),
-(1, 1, 3, 'Futebol',  NOW() - INTERVAL 55 MINUTE, 1, 1, 0, 0),
-(3, 5, 6, 'Basquete', NOW() - INTERVAL 70 MINUTE, 54, 49, 0, 0),
-(4, 3, 4, 'Volei',    NOW() - INTERVAL 40 MINUTE, 1, 2, 0, 0),
-(5, 7, 8, 'Esport',   NOW() - INTERVAL 25 MINUTE, 1, 0, 0, 3),
-(6, 8, 7, 'Esport',   NOW() - INTERVAL 30 MINUTE, 1, 1, 0, 3),
-(7, 7, 8, 'Esport',   NOW() - INTERVAL 15 MINUTE, 0, 1, 0, 3),
-(7, 8, 7, 'Esport',   NOW() + INTERVAL 1 DAY,     0, 0, 0, 3),
-(1, 2, 4, 'Futebol',  NOW() + INTERVAL 3 HOUR,    0, 0, 0, 0),
-(3, 6, 5, 'Basquete', NOW() + INTERVAL 1 DAY,     0, 0, 0, 0);
+-- Datas fixas e estados explicitos para reproduzir os tres cenarios em qualquer data.
+INSERT INTO Partida (CampeonatoId, TimeCasaId, TimeForaId, Tipo, DataHora, PlacarCasa, PlacarFora, Status, Minuto, MelhorDe) VALUES
+(1, 1, 2, 'Futebol',  '2026-10-20 16:00:00',  2,  1, 'Encerrada', NULL, 0),
+(1, 3, 4, 'Futebol',  '2026-10-20 18:30:00',  0,  0, 'Encerrada', NULL, 0),
+(1, 1, 3, 'Futebol',  '2026-10-27 16:00:00',  1,  0, 'Encerrada', NULL, 0),
+(2, 2, 4, 'Futebol',  '2026-11-25 19:00:00',  0,  0, 'Agendada',  NULL, 0),
+(3, 5, 6, 'Basquete', '2026-10-25 20:00:00', 98, 91, 'Encerrada', NULL, 0),
+(4, 3, 4, 'Volei',    '2026-10-26 21:00:00',  3,  1, 'Encerrada', NULL, 0),
+(5, 7, 8, 'Esport',   '2026-10-28 19:30:00',  2,  1, 'Encerrada', NULL, 3),
+(6, 8, 7, 'Esport',   '2026-11-25 19:00:00',  0,  0, 'Agendada',  NULL, 1),
+(1, 1, 3, 'Futebol',  '2026-11-23 18:05:00',  1,  1, 'AoVivo',      55, 0),
+(3, 5, 6, 'Basquete', '2026-11-23 17:50:00', 54, 49, 'AoVivo',    NULL, 0),
+(4, 3, 4, 'Volei',    '2026-11-23 18:20:00',  1,  2, 'AoVivo',    NULL, 0),
+(5, 7, 8, 'Esport',   '2026-11-23 18:35:00',  1,  0, 'AoVivo',    NULL, 3),
+(6, 8, 7, 'Esport',   '2026-11-23 18:30:00',  1,  1, 'AoVivo',    NULL, 3),
+(7, 7, 8, 'Esport',   '2026-11-23 18:45:00',  0,  1, 'AoVivo',    NULL, 3),
+(7, 8, 7, 'Esport',   '2026-11-24 19:00:00',  0,  0, 'Agendada',  NULL, 3),
+(1, 2, 4, 'Futebol',  '2026-11-23 22:00:00',  0,  0, 'Agendada',  NULL, 0),
+(3, 6, 5, 'Basquete', '2026-11-24 19:00:00',  0,  0, 'Agendada',  NULL, 0);
 
 INSERT INTO EstatisticaFutebol (AtletaId, Gols, ChutesAGol, Escanteios, Cartoes, Finalizacoes) VALUES
 (1, 12, 40, 5, 3, 55),
@@ -325,9 +335,3 @@ INSERT INTO HistoricoVisualizacao (UsuarioId, Tipo, Fonte, IdExterno, Nome) VALU
 (2, 'atleta',     'SportStats', '12', 'Gustavo Mendes (Blaze)'),
 (4, 'competicao', 'SportStats', '3',  'Liga de Basquete'),
 (5, 'time',       'SportStats', '8',  'Nova Legião');
-
--- TODO [BACK-06] Ajustes de banco (editar este arquivo e manter DROP/CREATE/INSERT completos):
---   1. Partida: adicionar colunas Status (Agendada/AoVivo/Encerrada) e Minuto.
---   2. Modalidade: adicionar colunas Grupo ('esportes'/'esports') e Slug.
---   3. Depois atualizar PartidaConsultaRepository, PartidaRepository.Montar e CatalogoModalidades.
---   4. Antes da entrega, trocar os NOW() das partidas de teste por datas fixas.
