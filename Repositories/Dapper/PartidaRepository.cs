@@ -93,12 +93,32 @@ public class PartidaRepository : IPartidaRepository
 
     public void Atualizar(Partida p)
     {
+        var anterior = p.EstadoPersistido;
+        if (p.EstadoAtual == anterior)
+            return;
+
         using var con = _factory.Criar();
-        con.Execute(
+        var atualizadas = con.Execute(
             @"UPDATE Partida SET DataHora = @DataHora, PlacarCasa = @PlacarCasa,
                                  PlacarFora = @PlacarFora, Status = @Status, Minuto = @Minuto
-              WHERE Id = @Id",
-            new { p.DataHora, p.PlacarCasa, p.PlacarFora, Status = p.Status.ToString(), p.Minuto, p.Id });
+              WHERE Id = @Id AND Status = @StatusAnterior AND Status <> @StatusEncerrada
+                AND PlacarCasa = @PlacarCasaAnterior AND PlacarFora = @PlacarForaAnterior
+                AND Minuto <=> @MinutoAnterior",
+            new
+            {
+                p.Id, p.DataHora, p.PlacarCasa, p.PlacarFora, p.Minuto,
+                Status = p.Status.ToString(),
+                StatusAnterior = anterior.Status.ToString(),
+                StatusEncerrada = nameof(StatusPartida.Encerrada),
+                PlacarCasaAnterior = anterior.PlacarCasa,
+                PlacarForaAnterior = anterior.PlacarFora,
+                MinutoAnterior = anterior.Minuto
+            });
+
+        if (atualizadas == 0)
+            throw new DominioException("A partida foi alterada ou excluída em outra requisição. Recarregue os detalhes e tente novamente.");
+
+        p.RegistrarEstadoPersistido();
     }
 
     public void Remover(int id)

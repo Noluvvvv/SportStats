@@ -13,8 +13,12 @@ public abstract class Partida
     public int PlacarCasa { get; private set; }
     public int PlacarFora { get; private set; }
     public StatusPartida Status { get; private set; }
-    public int? Minuto { get; }
+    public int? Minuto { get; private set; }
     public bool Encerrada => Status == StatusPartida.Encerrada;
+
+    internal (StatusPartida Status, int PlacarCasa, int PlacarFora, int? Minuto) EstadoAtual =>
+        (Status, PlacarCasa, PlacarFora, Minuto);
+    internal (StatusPartida Status, int PlacarCasa, int PlacarFora, int? Minuto) EstadoPersistido { get; private set; }
 
     public abstract TipoPartida Tipo { get; }
     public virtual int MelhorDe => 0;
@@ -39,6 +43,18 @@ public abstract class Partida
         PlacarFora = placarFora;
         Status = status;
         Minuto = minuto;
+        RegistrarEstadoPersistido();
+    }
+
+    internal void RegistrarEstadoPersistido() => EstadoPersistido = EstadoAtual;
+
+    public void Iniciar()
+    {
+        if (Encerrada) throw new PartidaEncerradaException();
+        if (Status == StatusPartida.AoVivo)
+            throw new DominioException("A partida já foi iniciada.");
+
+        Status = StatusPartida.AoVivo;
     }
 
     public void RegistrarPlacar(int casa, int fora)
@@ -49,6 +65,17 @@ public abstract class Partida
 
         PlacarCasa = casa;
         PlacarFora = fora;
+    }
+
+    public void AtualizarMinuto(int? minuto)
+    {
+        if (Encerrada) throw new PartidaEncerradaException();
+        if (Status != StatusPartida.AoVivo)
+            throw new DominioException("O minuto só pode ser atualizado durante uma partida ao vivo.");
+        if (minuto < 0)
+            throw new DominioException("O minuto da partida não pode ser negativo.");
+
+        Minuto = minuto;
     }
 
     public void Encerrar()
