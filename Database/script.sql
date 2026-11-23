@@ -335,9 +335,3 @@ INSERT INTO HistoricoVisualizacao (UsuarioId, Tipo, Fonte, IdExterno, Nome) VALU
 (2, 'atleta',     'SportStats', '12', 'Gustavo Mendes (Blaze)'),
 (4, 'competicao', 'SportStats', '3',  'Liga de Basquete'),
 (5, 'time',       'SportStats', '8',  'Nova Legião');
-
--- TODO [BACK-06] Ajustes de banco (editar este arquivo e manter DROP/CREATE/INSERT completos):
---   1. Partida: adicionar colunas Status (Agendada/AoVivo/Encerrada) e Minuto.
---   2. Modalidade: adicionar colunas Grupo ('esportes'/'esports') e Slug.
---   3. Depois atualizar PartidaConsultaRepository, PartidaRepository.Montar e CatalogoModalidades.
---   4. Antes da entrega, trocar os NOW() das partidas de teste por datas fixas.
