@@ -36,6 +36,7 @@ grep -RnE "TODO \[BACK-" --include="*.cs" --include="*.cshtml" --include="*.js" 
 | ID | Situação |
 |---|---|
 | BACK-03 | Implementação realizada e testada. Dois commits enviados para a branch `feature/back-03-atleta-transferencia`. Pull Request pendente de criação e revisão. R4 parcialmente atendido: falta ajustar o feedback da exclusão de atleta com histórico. |
+| BACK-06 | Implementação concluída na branch `feature/back-06-database`. Build e validação em MySQL 8.4.13 descartável aprovados para o catálogo, as restrições, as chaves estrangeiras, a persistência Dapper, o retrospecto, a concorrência e os formulários MVC. Bases existentes exigem uma migração não destrutiva antes da atualização. |
 
 ## Atualização (integração, usuários e pendências)
 

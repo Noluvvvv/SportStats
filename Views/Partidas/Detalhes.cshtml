@@ -32,6 +32,10 @@
         </h2>
         <p class="vazio">
             @status - @p.DataHora.ToString("dd/MM/yyyy HH:mm")
+            @if (p.Minuto is int minuto)
+            {
+                <text> - Minuto @minuto</text>
+            }
             @if (p.Formato is not null)
             {
                 <text> - Formato @p.Formato</text>
@@ -42,6 +46,13 @@
     @* ---------- Ações (só enquanto a partida não foi encerrada) ---------- *@
     @if (!p.Encerrada)
     {
+        @if (p.Agendada)
+        {
+            <form asp-action="Iniciar" asp-route-id="@p.Id" method="post" class="form-inline">
+                <button type="submit" class="botao">Iniciar partida</button>
+            </form>
+        }
+
         <h2 class="coluna-titulo">Registrar placar (@unidade)</h2>
         <form asp-action="RegistrarPlacar" asp-route-id="@p.Id" method="post" class="formulario">
             <div class="campo">
@@ -52,13 +63,20 @@
                 <label for="fora">@p.TimeFora</label>
                 <input type="number" id="fora" name="fora" min="0" value="@p.PlacarFora" required />
             </div>
+            @if (p.AoVivo)
+            {
+                <div class="campo">
+                    <label for="minuto">Minuto (opcional)</label>
+                    <input type="number" id="minuto" name="minuto" min="0" value="@p.Minuto" />
+                </div>
+            }
             <div class="formulario-acoes">
                 <button type="submit" class="botao botao-vermelho">Salvar placar</button>
             </div>
         </form>
 
         <form asp-action="Encerrar" asp-route-id="@p.Id" method="post" class="form-inline"
-              onsubmit="return confirm('Encerrar a partida? Depois disso o placar não poderá mais ser alterado.');">
+              onsubmit="return confirm('Encerrar a partida? Depois disso o placar e o minuto não poderão mais ser alterados.');">
             <button type="submit" class="botao">Encerrar partida</button>
         </form>
     }
