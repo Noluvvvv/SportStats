@@ -11,7 +11,10 @@ USE sportstats;
 
 CREATE TABLE Modalidade (
     Id INT AUTO_INCREMENT PRIMARY KEY,
-    Nome VARCHAR(50) NOT NULL UNIQUE
+    Nome VARCHAR(50) NOT NULL UNIQUE,
+    Grupo VARCHAR(10) NOT NULL,
+    Slug VARCHAR(20) NOT NULL UNIQUE,
+    CONSTRAINT ck_modalidade_grupo CHECK (CAST(Grupo AS BINARY) IN ('esportes', 'esports'))
 );
 
 CREATE TABLE Campeonato (
@@ -112,8 +115,13 @@ CREATE TABLE EstatisticaCsGo (
     FOREIGN KEY (AtletaId) REFERENCES Atleta(Id)
 );
 
-INSERT INTO Modalidade (Nome) VALUES
-('Futebol'), ('Basquete'), ('Vôlei'), ('Valorant'), ('Counter-Strike'), ('League of Legends');
+INSERT INTO Modalidade (Nome, Grupo, Slug) VALUES
+('Futebol', 'esportes', 'futebol'),
+('Basquete', 'esportes', 'basquete'),
+('Vôlei', 'esportes', 'volei'),
+('Valorant', 'esports', 'valorant'),
+('Counter-Strike', 'esports', 'cs'),
+('League of Legends', 'esports', 'lol');
 
 INSERT INTO Campeonato (Nome, Temporada, ModalidadeId) VALUES
 ('Liga Nacional', 2026, 1),
