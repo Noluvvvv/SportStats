@@ -1,3 +1,4 @@
+
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportStats.Models;
@@ -12,7 +13,9 @@ public class HomeController : Controller
     private readonly IPartidaConsultaRepository _consulta;
     private readonly ClassificacaoService _classificacao;
 
-    public HomeController(IPartidaConsultaRepository consulta, ClassificacaoService classificacao)
+    public HomeController(
+        IPartidaConsultaRepository consulta,
+        ClassificacaoService classificacao)
     {
         _consulta = consulta;
         _classificacao = classificacao;
@@ -32,15 +35,29 @@ public class HomeController : Controller
             CampeonatoId = campeonato,
             Modalidades = CatalogoModalidades.DoGrupo(grupoAtivo).ToList(),
             Competicoes = competicoes,
-            AoVivo = partidas.Where(p => p.AoVivo).OrderBy(p => p.DataHora).ToList(),
-            Proximas = partidas.Where(p => p.Agendada).OrderBy(p => p.DataHora).Take(10).ToList(),
-            Recentes = partidas.Where(p => p.Encerrada).OrderByDescending(p => p.DataHora).Take(15).ToList()
+            AoVivo = partidas
+                .Where(p => p.AoVivo)
+                .OrderBy(p => p.DataHora)
+                .ToList(),
+            Proximas = partidas
+                .Where(p => p.Agendada)
+                .OrderBy(p => p.DataHora)
+                .Take(10)
+                .ToList(),
+            Recentes = partidas
+                .Where(p => p.Encerrada)
+                .OrderByDescending(p => p.DataHora)
+                .Take(15)
+                .ToList()
         };
 
         var idClassificacao = campeonato ?? competicoes.FirstOrDefault()?.Id;
+
         if (idClassificacao is int id)
         {
-            vm.TituloClassificacao = competicoes.FirstOrDefault(c => c.Id == id)?.Nome;
+            vm.TituloClassificacao =
+                competicoes.FirstOrDefault(c => c.Id == id)?.Nome;
+
             vm.Classificacao = _classificacao.Calcular(id);
         }
 
@@ -53,23 +70,46 @@ public class HomeController : Controller
     public IActionResult AoVivo(string? grupo, string? modalidade)
     {
         var (_, _, nomes) = Resolver(grupo, modalidade);
+
         var placares = _consulta.Listar(nomes, null)
             .Where(p => p.AoVivo)
-            .Select(p => new { p.Id, p.PlacarCasa, p.PlacarFora });
+            .Select(p => new
+            {
+                p.Id,
+                p.PlacarCasa,
+                p.PlacarFora
+            });
+
         return Json(placares);
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    [ResponseCache(
+        Duration = 0,
+        Location = ResponseCacheLocation.None,
+        NoStore = true)]
     public IActionResult Error() =>
-        View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        View(new ErrorViewModel
+        {
+            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+        });
 
-    private static (string Grupo, ModalidadeInfo? Info, string[] Nomes) Resolver(string? grupo, string? modalidade)
+    private static (
+        string Grupo,
+        ModalidadeInfo? Info,
+        string[] Nomes
+    ) Resolver(string? grupo, string? modalidade)
     {
         var info = CatalogoModalidades.PorSlug(modalidade);
-        var grupoAtivo = info?.Grupo ?? (grupo == "esports" ? "esports" : "esportes");
+
+        var grupoAtivo = info?.Grupo ??
+            (grupo == "esports" ? "esports" : "esportes");
+
         var nomes = info is not null
             ? new[] { info.Nome }
-            : CatalogoModalidades.DoGrupo(grupoAtivo).Select(m => m.Nome).ToArray();
+            : CatalogoModalidades.DoGrupo(grupoAtivo)
+                .Select(m => m.Nome)
+                .ToArray();
+
         return (grupoAtivo, info, nomes);
     }
 }
