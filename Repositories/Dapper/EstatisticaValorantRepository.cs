@@ -18,9 +18,9 @@ public class EstatisticaValorantRepository : IRepository<EstatisticaValorant>
         using var con = _factory.Criar();
 
         return con.Query<EstatisticaValorant>(
-            @"SELECT Id, AtletaId, Abates, Assistencias, Agente
-              FROM EstatisticaValorant
-              ORDER BY Abates DESC"
+            @"SELECT AtletaId, Abates, Assistencias, Agente, Id
+          FROM EstatisticaValorant
+          ORDER BY Abates DESC"
         ).ToList();
     }
 
@@ -29,9 +29,9 @@ public class EstatisticaValorantRepository : IRepository<EstatisticaValorant>
         using var con = _factory.Criar();
 
         return con.QuerySingleOrDefault<EstatisticaValorant>(
-            @"SELECT Id, AtletaId, Abates, Assistencias, Agente
-              FROM EstatisticaValorant
-              WHERE Id = @id",
+            @"SELECT AtletaId, Abates, Assistencias, Agente, Id
+          FROM EstatisticaValorant
+          WHERE Id = @id",
             new { id }
         );
     }

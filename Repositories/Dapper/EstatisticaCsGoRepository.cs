@@ -18,9 +18,9 @@ public class EstatisticaCsGoRepository : IRepository<EstatisticaCsGo>
         using var con = _factory.Criar();
 
         return con.Query<EstatisticaCsGo>(
-            @"SELECT Id, AtletaId, Abates, Assistencias, Headshots
-              FROM EstatisticaCsGo
-              ORDER BY Abates DESC"
+            @"SELECT AtletaId, Abates, Assistencias, Headshots, Id
+          FROM EstatisticaCsGo
+          ORDER BY Abates DESC"
         ).ToList();
     }
 
@@ -29,9 +29,9 @@ public class EstatisticaCsGoRepository : IRepository<EstatisticaCsGo>
         using var con = _factory.Criar();
 
         return con.QuerySingleOrDefault<EstatisticaCsGo>(
-            @"SELECT Id, AtletaId, Abates, Assistencias, Headshots
-              FROM EstatisticaCsGo
-              WHERE Id = @id",
+            @"SELECT AtletaId, Abates, Assistencias, Headshots, Id
+          FROM EstatisticaCsGo
+          WHERE Id = @id",
             new { id }
         );
     }

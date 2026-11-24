@@ -18,10 +18,11 @@ public class EstatisticaBasqueteRepository : IRepository<EstatisticaBasquete>
         using var con = _factory.Criar();
 
         return con.Query<EstatisticaBasquete>(
-            @"SELECT Id, AtletaId, Pontos, Assistencias,
-                     MediaPontos, Faltas, Rebotes
-              FROM EstatisticaBasquete
-              ORDER BY Pontos DESC"
+            @"SELECT AtletaId, Pontos, Assistencias,
+                 CAST(MediaPontos AS DOUBLE) AS MediaPontos,
+                 Faltas, Rebotes, Id
+          FROM EstatisticaBasquete
+          ORDER BY Pontos DESC"
         ).ToList();
     }
 
@@ -30,10 +31,11 @@ public class EstatisticaBasqueteRepository : IRepository<EstatisticaBasquete>
         using var con = _factory.Criar();
 
         return con.QuerySingleOrDefault<EstatisticaBasquete>(
-            @"SELECT Id, AtletaId, Pontos, Assistencias,
-                     MediaPontos, Faltas, Rebotes
-              FROM EstatisticaBasquete
-              WHERE Id = @id",
+            @"SELECT AtletaId, Pontos, Assistencias,
+                 CAST(MediaPontos AS DOUBLE) AS MediaPontos,
+                 Faltas, Rebotes, Id
+          FROM EstatisticaBasquete
+          WHERE Id = @id",
             new { id }
         );
     }

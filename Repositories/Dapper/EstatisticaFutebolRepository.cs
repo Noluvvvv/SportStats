@@ -18,10 +18,10 @@ public class EstatisticaFutebolRepository : IRepository<EstatisticaFutebol>
         using var con = _factory.Criar();
 
         return con.Query<EstatisticaFutebol>(
-            @"SELECT Id, AtletaId, Gols, ChutesAGol,
-                     Escanteios, Cartoes, Finalizacoes
-              FROM EstatisticaFutebol
-              ORDER BY Gols DESC"
+            @"SELECT AtletaId, Gols, ChutesAGol, Escanteios,
+                 Cartoes, Finalizacoes, Id
+          FROM EstatisticaFutebol
+          ORDER BY Gols DESC"
         ).ToList();
     }
 
@@ -30,10 +30,10 @@ public class EstatisticaFutebolRepository : IRepository<EstatisticaFutebol>
         using var con = _factory.Criar();
 
         return con.QuerySingleOrDefault<EstatisticaFutebol>(
-            @"SELECT Id, AtletaId, Gols, ChutesAGol,
-                     Escanteios, Cartoes, Finalizacoes
-              FROM EstatisticaFutebol
-              WHERE Id = @id",
+            @"SELECT AtletaId, Gols, ChutesAGol, Escanteios,
+                 Cartoes, Finalizacoes, Id
+          FROM EstatisticaFutebol
+          WHERE Id = @id",
             new { id }
         );
     }
