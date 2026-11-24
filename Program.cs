@@ -1,3 +1,4 @@
+using SportStats.Services;
 using SportStats.Hubs;
 using SportStats.Integracao;
 using SportStats.Models;
@@ -13,6 +14,9 @@ builder.Services.AddScoped<IPartidaRepository, PartidaRepository>();
 builder.Services.AddScoped<IRepository<Partida>>(sp => sp.GetRequiredService<IPartidaRepository>());
 
 builder.Services.AddIntegracaoEsportiva(builder.Configuration);
+
+builder.Services.AddScoped<IPartidaConsultaRepository, PartidaConsultaRepository>();
+builder.Services.AddScoped<ClassificacaoService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Hosting
+@inject Microsoft.Extensions.Options.IOptions<SportStats.Integracao.Config.FlashscoreOptions> Opcoes
+@inject IWebHostEnvironment Ambiente
+@{
+    var flash = Opcoes.Value;
+    var url = flash.UrlSegura();
+    var altura = Math.Clamp(flash.Altura, 300, 1200);
+}
+
+@if (url is not null)
+{
+    <section class="bloco" id="flashscore">
+        <h2 class="bloco-titulo">@flash.Titulo</h2>
+        <iframe src="@url"
+                title="@flash.Titulo"
+                loading="lazy"
+                sandbox="allow-scripts allow-same-origin allow-popups"
+                referrerpolicy="strict-origin-when-cross-origin"
+                style="width:100%;height:@(altura)px;border:0;background:#fff"></iframe>
+    </section>
+}
+else if (Ambiente.IsDevelopment())
+{
+    <section class="bloco" id="flashscore">
+        <h2 class="bloco-titulo">@flash.Titulo</h2>
+        <p class="vazio vazio-caixa">Espaço reservado para o iframe do Flashscore (visível só em desenvolvimento). Configure <code>Flashscore:EmbedUrl</code> com o endereço de incorporação oficial.</p>
+    </section>
+}

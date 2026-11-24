@@ -16,6 +16,7 @@ public static class IntegracaoServiceCollectionExtensions
         services.Configure<IntegracaoOptions>(config.GetSection("Integracao"));
         services.PostConfigure<IntegracaoOptions>(o => o.AplicarPadroes());
         services.Configure<EsportsOptions>(config.GetSection("Esports"));
+        services.Configure<FlashscoreOptions>(config.GetSection("Flashscore"));
         services.AddMemoryCache();
         services.AddSignalR();
 
