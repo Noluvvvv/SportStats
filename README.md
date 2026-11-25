@@ -159,7 +159,7 @@ notificações e histórico.
 | Integrante | RA |
 |---|---|
 | Ângelo Avezum Marques da Silva | 2840482511017 |
-| Gabriel Henrique dos Santos Lopes | *preencher* |
+| Gabriel Henrique dos Santos Lopes | 2840482511015 |
 | Maxwell Carlos Silverio | *preencher* |
 | Saulo da Silva Stuque Menegucci | *preencher* |
 
