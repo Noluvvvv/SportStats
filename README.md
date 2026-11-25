@@ -160,7 +160,7 @@ notificações e histórico.
 |---|---|
 | Ângelo Avezum Marques da Silva | 2840482511017 |
 | Gabriel Henrique dos Santos Lopes | 2840482511015 |
-| Maxwell Carlos Silverio | *preencher* |
+| Maxwell Carlos Silverio | 2840482511020 |
 | Saulo da Silva Stuque Menegucci | *preencher* |
 
 
