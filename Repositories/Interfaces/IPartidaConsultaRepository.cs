@@ -1,10 +1,28 @@
-using SportStats.Models.ViewModels;
+﻿using SportStats.Models.ViewModels;
 
 namespace SportStats.Repositories.Interfaces;
 
-// Consultas de leitura para as telas (JOINs). Escrita continua em IPartidaRepository.
+// Repositorio de leitura para consultas utilizadas pelas telas.
 public interface IPartidaConsultaRepository
 {
-    IEnumerable<PartidaResumo> Listar(IEnumerable<string> modalidades, int? campeonatoId);
-    IEnumerable<CompeticaoItem> ListarCompeticoes(IEnumerable<string> modalidades);
+    // Consultas da Home.
+    IEnumerable<PartidaResumo> Listar(
+        IEnumerable<string> modalidades,
+        int? campeonatoId);
+
+    IEnumerable<CompeticaoItem> ListarCompeticoes(
+        IEnumerable<string> modalidades);
+
+    // Consultas gerais.
+    IEnumerable<PartidaResumo> ListarResumos();
+
+    PartidaResumo? ObterResumoPorId(int id);
+
+    IEnumerable<CompeticaoItem> ListarCompeticoes();
+
+    // Historico de confrontos diretos.
+    RetrospectoConfronto ObterRetrospecto(
+        int partidaId,
+        int timeCasaId,
+        int timeForaId);
 }

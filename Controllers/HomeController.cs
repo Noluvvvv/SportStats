@@ -1,5 +1,4 @@
-
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportStats.Models;
 using SportStats.Models.ViewModels;
@@ -12,13 +11,16 @@ public class HomeController : Controller
 {
     private readonly IPartidaConsultaRepository _consulta;
     private readonly ClassificacaoService _classificacao;
+    private readonly RankingService _rankingService;
 
     public HomeController(
         IPartidaConsultaRepository consulta,
-        ClassificacaoService classificacao)
+        ClassificacaoService classificacao,
+        RankingService rankingService)
     {
         _consulta = consulta;
         _classificacao = classificacao;
+        _rankingService = rankingService;
     }
 
     public IActionResult Index(string? grupo, string? modalidade, int? campeonato)
@@ -50,6 +52,9 @@ public class HomeController : Controller
                 .Take(15)
                 .ToList()
         };
+
+        // Preserva os rankings existentes na branch main.
+        _rankingService.CarregarRankings(vm);
 
         var idClassificacao = campeonato ?? competicoes.FirstOrDefault()?.Id;
 
