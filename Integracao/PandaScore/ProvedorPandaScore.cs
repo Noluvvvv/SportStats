@@ -20,7 +20,7 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
     private const int MaxFalhasSeguidas = 5;
     private const string RotaAoVivo = "matches/running";
     private const string RotaProximas = "matches/upcoming?sort=begin_at&page%5Bsize%5D=50";
-    private const string RotaPassadas = "matches/past?sort=-begin_at&page%5Bsize%5D=50";
+    private const string RotaPassadas = "matches/past?filter%5Bstatus%5D=finished&sort=-begin_at&page%5Bsize%5D=50";
 
     private readonly IHttpClientFactory _http;
     private readonly IMemoryCache _cache;
@@ -51,17 +51,26 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
 
     public async Task<IReadOnlyList<PartidaExterna>> ObterAgendaAsync(DateOnly data, CancellationToken ct = default)
     {
+        // A API ja separa partidas futuras e passadas.
+        // Nao limitar a consulta ao dia atual: isso escondia confrontos futuros.
+        _ = data;
+
         var proximas = await BuscarAsync(RotaProximas, ct);
         var passadas = await BuscarAsync(RotaPassadas, ct);
-        return proximas.Concat(passadas)
-            .Where(p => DateOnly.FromDateTime(p.IniciaEmUtc.ToLocalTime()) == data)
+
+        return proximas
+            .Concat(passadas)
+            .GroupBy(p => p.Chave)
+            .Select(g => g.First())
             .OrderBy(p => p.IniciaEmUtc)
             .ToList();
     }
 
     private async Task<IReadOnlyList<PartidaExterna>> BuscarAsync(string rota, CancellationToken ct)
     {
-        if (!Habilitado) return Array.Empty<PartidaExterna>();
+        if (!Habilitado)
+            throw new InvalidOperationException("PandaScore indisponivel para consulta.");
+
         try
         {
             var json = await _cache.GetOrCreateAsync($"panda:{rota}", async entrada =>
@@ -69,13 +78,16 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
                 entrada.AbsoluteExpirationRelativeToNow = ValidadeCache;
                 return await BaixarAsync(rota, ct);
             });
-            return json is null ? Array.Empty<PartidaExterna>() : Mapear(json);
+            if (json is null)
+                throw new HttpRequestException("PandaScore nao retornou uma resposta valida.");
+
+            return Mapear(json);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException)
         {
             _log.LogWarning("PandaScore {Rota}: {Mensagem}", rota, ex.Message);
-            return Array.Empty<PartidaExterna>();
+            throw;
         }
     }
 
@@ -143,6 +155,19 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
                         detalhe = $"Mapa {pos}";
 
             var urlLive = JsonUtil.Texto(m, "live", "url");
+            var status = JsonUtil.Texto(m, "status");
+
+            // A API pode fornecer a data original mesmo quando begin_at
+            // ou scheduled_at não estão preenchidos.
+            var inicio = JsonUtil.Data(m, "begin_at")
+                ?? JsonUtil.Data(m, "scheduled_at")
+                ?? JsonUtil.Data(m, "original_scheduled_at");
+
+            // Sem data, não inventamos uma data atual para partidas
+            // agendadas ou finalizadas. Partidas ao vivo são preservadas.
+            if (inicio is null &&
+                !string.Equals(status, "running", StringComparison.OrdinalIgnoreCase))
+                continue;
 
             lista.Add(new PartidaExterna
             {
@@ -154,12 +179,12 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
                 // A PandaScore nao tem mandante: o primeiro adversario e tratado como "casa".
                 Casa = MapearTime(o1.Value),
                 Fora = MapearTime(o2.Value),
-                Status = MapearStatus(JsonUtil.Texto(m, "status")),
+                Status = MapearStatus(status),
                 Detalhe = detalhe,
                 PlacarCasa = Placar(m, JsonUtil.Inteiro(o1.Value, "id")),
                 PlacarFora = Placar(m, JsonUtil.Inteiro(o2.Value, "id")),
                 MelhorDe = JsonUtil.Inteiro(m, "number_of_games"),
-                IniciaEmUtc = JsonUtil.Data(m, "begin_at") ?? JsonUtil.Data(m, "scheduled_at") ?? DateTime.UtcNow,
+                IniciaEmUtc = inicio ?? DateTime.MinValue,
                 TempoRealDisponivel = JsonUtil.Booleano(m, "live", "supported") && !string.IsNullOrEmpty(urlLive),
                 UrlTempoReal = urlLive
             });
@@ -180,12 +205,20 @@ public sealed class ProvedorPandaScore : IProvedorTempoReal
     }
 
     // Placar = mapas ganhos, vindo de results[{ team_id, score }].
-    private static int Placar(JsonElement partida, int? idTime)
+    private static int? Placar(JsonElement partida, int? idTime)
     {
-        if (idTime is null || !partida.TryGetProperty("results", out var rs) || rs.ValueKind != JsonValueKind.Array) return 0;
-        foreach (var r in rs.EnumerateArray())
-            if (JsonUtil.Inteiro(r, "team_id") == idTime) return JsonUtil.Inteiro(r, "score") ?? 0;
-        return 0;
+        if (idTime is null ||
+            !partida.TryGetProperty("results", out var resultados) ||
+            resultados.ValueKind != JsonValueKind.Array)
+            return null;
+
+        foreach (var resultado in resultados.EnumerateArray())
+        {
+            if (JsonUtil.Inteiro(resultado, "team_id") == idTime)
+                return JsonUtil.Inteiro(resultado, "score");
+        }
+
+        return null;
     }
 
     private static StatusPartidaExterna MapearStatus(string? status) => status switch

@@ -55,13 +55,16 @@ public sealed class ProvedorEspn : IProvedorDados
                 entrada.AbsoluteExpirationRelativeToNow = ValidadeCache;
                 return await _http.CreateClient("espn").GetStringAsync(rota, ct);
             });
-            return json is null ? new List<PartidaExterna>() : Mapear(json, liga);
+            if (json is null)
+                throw new HttpRequestException("A ESPN nao retornou uma resposta valida.");
+
+            return Mapear(json, liga);
         }
         catch (OperationCanceledException) when (ct.IsCancellationRequested) { throw; }
         catch (Exception ex) when (ex is HttpRequestException or JsonException or OperationCanceledException)
         {
             _log.LogWarning("ESPN {Liga}: {Mensagem}", liga.Liga, ex.Message);
-            return new List<PartidaExterna>();
+            throw;
         }
     }
 
@@ -94,6 +97,11 @@ public sealed class ProvedorEspn : IProvedorDados
             if (liga.Modalidade == "futebol" && status == StatusPartidaExterna.AoVivo)
                 minuto = ExtrairMinuto(JsonUtil.Texto(ev, "status", "displayClock"));
 
+            var inicio = JsonUtil.Data(ev, "date");
+
+            // Evento sem data valida nao deve receber DateTime.UtcNow artificial.
+            if (inicio is null) continue;
+
             resultado.Add(new PartidaExterna
             {
                 Fonte = "ESPN",
@@ -106,9 +114,9 @@ public sealed class ProvedorEspn : IProvedorDados
                 Status = status,
                 Detalhe = JsonUtil.Texto(ev, "status", "type", "shortDetail"),
                 Minuto = minuto,
-                PlacarCasa = JsonUtil.Inteiro(casa.Value, "score") ?? 0,
-                PlacarFora = JsonUtil.Inteiro(fora.Value, "score") ?? 0,
-                IniciaEmUtc = JsonUtil.Data(ev, "date") ?? DateTime.UtcNow
+                PlacarCasa = JsonUtil.Inteiro(casa.Value, "score"),
+                PlacarFora = JsonUtil.Inteiro(fora.Value, "score"),
+                IniciaEmUtc = inicio.Value
             });
         }
         return resultado;

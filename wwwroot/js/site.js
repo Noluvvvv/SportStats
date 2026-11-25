@@ -1,23 +1,45 @@
-﻿(() => {
+(() => {
     const raiz = document.querySelector("[data-ao-vivo-url]");
     if (!raiz) return;
 
     const url = raiz.dataset.aoVivoUrl;
     const grupo = raiz.dataset.grupo;
-    const modalidade = raiz.dataset.modalidade;
+    const modalidade = (raiz.dataset.modalidade || "").toLowerCase();
 
     const INTERVALO_MS = 30000;
+    const INTERVALO_RECONEXAO_MS = 5000;
 
-    function atualizarElemento(chave, placarCasa, placarFora) {
-        document.querySelectorAll("[data-placar-casa]").forEach(elemento => {
-            if (elemento.dataset.placarCasa === chave) {
-                elemento.textContent = placarCasa;
-            }
-        });
+    let atualizando = false;
+    let recarregando = false;
 
-        document.querySelectorAll("[data-placar-fora]").forEach(elemento => {
-            if (elemento.dataset.placarFora === chave) {
-                elemento.textContent = placarFora;
+    function obterChave(partida) {
+        return partida?.chave ?? partida?.Chave ?? null;
+    }
+
+    function obterModalidade(partida) {
+        return (
+            partida?.modalidadeSlug ??
+            partida?.ModalidadeSlug ??
+            ""
+        ).toLowerCase();
+    }
+
+    function filtrarPartidas(partidas) {
+        if (!Array.isArray(partidas)) return [];
+
+        if (!modalidade) return partidas;
+
+        return partidas.filter(
+            partida => obterModalidade(partida) === modalidade
+        );
+    }
+
+    function atualizarElemento(seletor, atributo, chave, valor) {
+        if (valor === null || valor === undefined) return;
+
+        document.querySelectorAll(seletor).forEach(elemento => {
+            if (elemento.dataset[atributo] === chave) {
+                elemento.textContent = String(valor);
             }
         });
     }
@@ -25,16 +47,61 @@
     function aplicarPlacar(partida) {
         if (!partida) return;
 
-        const chave = partida.chave ?? partida.Chave;
+        const chave = obterChave(partida);
+        if (!chave) return;
+
         const casa = partida.placarCasa ?? partida.PlacarCasa;
         const fora = partida.placarFora ?? partida.PlacarFora;
 
-        if (!chave) return;
+        atualizarElemento(
+            "[data-placar-casa]",
+            "placarCasa",
+            chave,
+            casa
+        );
 
-        atualizarElemento(chave, casa, fora);
+        atualizarElemento(
+            "[data-placar-fora]",
+            "placarFora",
+            chave,
+            fora
+        );
+    }
+
+    function reconciliarPartidas(partidas) {
+        const bloco = document.querySelector(
+            '[data-ao-vivo-bloco="true"]'
+        );
+
+        if (!bloco || recarregando) return;
+
+        const chavesApi = new Set(
+            partidas.map(obterChave).filter(Boolean)
+        );
+
+        const elementos = bloco.querySelectorAll("[data-placar-casa]");
+
+        const chavesTela = new Set(
+            Array.from(elementos)
+                .map(elemento => elemento.dataset.placarCasa)
+                .filter(Boolean)
+        );
+
+        const mudou =
+            chavesApi.size !== chavesTela.size ||
+            [...chavesApi].some(chave => !chavesTela.has(chave));
+
+        if (mudou) {
+            recarregando = true;
+            window.location.reload();
+        }
     }
 
     async function atualizarPlacares() {
+        if (atualizando || recarregando) return;
+
+        atualizando = true;
+
         try {
             const resposta = await fetch(url, {
                 headers: { Accept: "application/json" },
@@ -43,22 +110,32 @@
 
             if (!resposta.ok) return;
 
-            const partidas = await resposta.json();
+            const dados = await resposta.json();
 
-            for (const partida of partidas) {
-                aplicarPlacar(partida);
-            }
-        } catch {
-            // Se a API estiver indisponivel, tenta novamente no proximo ciclo.
+            if (!Array.isArray(dados)) return;
+
+            const partidas = filtrarPartidas(dados);
+
+            // O endpoint local consulta o cache.
+            // Uma resposta HTTP 200 com lista vazia representa
+            // o snapshot atual do cache, não uma chamada direta ao provedor.
+            reconciliarPartidas(partidas);
+
+            if (recarregando) return;
+
+            partidas.forEach(aplicarPlacar);
+        } catch (erro) {
+            console.warn("Falha ao atualizar partidas:", erro);
+        } finally {
+            atualizando = false;
         }
     }
 
-    // Polling funciona como alternativa caso SignalR ou a conexao WebSocket falhe.
     atualizarPlacares();
     setInterval(atualizarPlacares, INTERVALO_MS);
 
     if (!window.signalR) {
-        console.warn("SignalR nao carregado. Atualizacao por polling ativada.");
+        console.warn("SignalR indisponível. Polling continua ativo.");
         return;
     }
 
@@ -67,35 +144,52 @@
         .withAutomaticReconnect()
         .build();
 
-    conexao.on("placarAtualizado", partidas => {
-        if (!Array.isArray(partidas)) return;
+    conexao.on("placarAtualizado", dados => {
+        const partidas = Array.isArray(dados) ? dados : [dados];
 
         partidas.forEach(aplicarPlacar);
     });
 
+    async function entrarNosGrupos() {
+        if (grupo) {
+            await conexao.invoke("EntrarNoGrupo", grupo);
+        }
+
+        if (modalidade) {
+            await conexao.invoke("EntrarNoGrupo", modalidade);
+        }
+    }
+
     async function conectar() {
-        try {
-            await conexao.start();
+        while (conexao.state === signalR.HubConnectionState.Disconnected) {
+            try {
+                await conexao.start();
+                await entrarNosGrupos();
 
-            if (grupo) {
-                await conexao.invoke("EntrarNoGrupo", grupo);
+                console.info("SignalR conectado ao SportStats.");
+
+                await atualizarPlacares();
+                return;
+            } catch (erro) {
+                console.warn(
+                    "Falha na conexão SignalR. Nova tentativa em 5 segundos.",
+                    erro
+                );
+
+                await new Promise(resolve =>
+                    setTimeout(resolve, INTERVALO_RECONEXAO_MS)
+                );
             }
-
-            if (modalidade) {
-                await conexao.invoke("EntrarNoGrupo", modalidade);
-            }
-
-            console.info("SignalR conectado ao placar do SportStats.");
-        } catch (erro) {
-            console.warn("Falha ao conectar SignalR:", erro);
         }
     }
 
     conexao.onreconnected(async () => {
-        if (grupo) await conexao.invoke("EntrarNoGrupo", grupo);
-        if (modalidade) await conexao.invoke("EntrarNoGrupo", modalidade);
-
-        atualizarPlacares();
+        try {
+            await entrarNosGrupos();
+            await atualizarPlacares();
+        } catch (erro) {
+            console.warn("Falha ao reinscrever grupos:", erro);
+        }
     });
 
     conectar();

@@ -14,7 +14,11 @@
     </div>
 </nav>
 
-<main class="grade" style="grid-template-columns: minmax(0, 1fr);">
+<main class="grade"
+      style="grid-template-columns: minmax(0, 1fr);"
+      data-ao-vivo-url="@Url.Action("AoVivo", "Integracao", new { grupo = "esports" })"
+      data-grupo="esports"
+      data-modalidade="@(Model.Game == "all" ? "" : Model.Game)">
     <section class="centro">
         @if (Model.DisplayMode == "api")
         {
@@ -46,30 +50,3 @@
         <partial name="_FlashscoreWidget" />
     </section>
 </main>
-
-@section Scripts {
-    @if (Model.DisplayMode == "api")
-    {
-        <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.7/dist/browser/signalr.min.js"></script>
-        <script>
-            (function () {
-                if (!window.signalR) return;
-                var grupo = "@(Model.Game == "all" ? "esports" : Model.Game)";
-                var conexao = new signalR.HubConnectionBuilder().withUrl("/hubs/placar").withAutomaticReconnect().build();
-
-                conexao.on("placarAtualizado", function (lista) {
-                    lista.forEach(function (p) {
-                        var casa = document.querySelector('[data-placar-casa="' + p.chave + '"]');
-                        var fora = document.querySelector('[data-placar-fora="' + p.chave + '"]');
-                        if (casa) casa.textContent = p.placarCasa;
-                        if (fora) fora.textContent = p.placarFora;
-                    });
-                });
-
-                conexao.start()
-                    .then(function () { return conexao.invoke("EntrarNoGrupo", grupo); })
-                    .catch(function (e) { console.warn("SignalR:", e); });
-            })();
-        </script>
-    }
-}

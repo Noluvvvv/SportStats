@@ -34,8 +34,8 @@ public class PartidaExterna
     public StatusPartidaExterna Status { get; set; }
     public string? Detalhe { get; set; }                    // "67'", "Q3 5:23", "Mapa 2"
     public int? Minuto { get; set; }
-    public int PlacarCasa { get; set; }
-    public int PlacarFora { get; set; }
+    public int? PlacarCasa { get; set; }
+    public int? PlacarFora { get; set; }
     public int? MelhorDe { get; set; }
     public DateTime IniciaEmUtc { get; set; }
     public bool TempoRealDisponivel { get; set; }

@@ -27,7 +27,22 @@ public class EsportsService
         if (_pandaScore.Habilitado)
         {
             bool Filtro(PartidaExterna p) => slug == "all" || p.ModalidadeSlug == slug;
+            var agora = DateTime.UtcNow;
             var agenda = _cache.Agenda("esports").Where(Filtro).ToList();
+
+            var proximas = agenda
+                .Where(p => p.Status == StatusPartidaExterna.Agendada)
+                .Where(p => p.IniciaEmUtc >= agora.AddMinutes(-5))
+                .OrderBy(p => p.IniciaEmUtc)
+                .Take(10)
+                .ToList();
+
+            var recentes = agenda
+                .Where(p => p.Status == StatusPartidaExterna.Encerrada)
+                .Where(p => p.IniciaEmUtc >= agora.AddDays(-7))
+                .OrderByDescending(p => p.IniciaEmUtc)
+                .Take(10)
+                .ToList();
 
             return new EsportsPageViewModel
             {
@@ -36,9 +51,8 @@ public class EsportsService
                 Provider = "PandaScore",
                 AtualizadoEmUtc = _cache.UltimaAtualizacao("PandaScore"),
                 AoVivo = _cache.AoVivo("esports").Where(Filtro).ToList(),
-                Proximas = agenda.Where(p => p.Status == StatusPartidaExterna.Agendada).Take(10).ToList(),
-                Recentes = agenda.Where(p => p.Status == StatusPartidaExterna.Encerrada)
-                                 .OrderByDescending(p => p.IniciaEmUtc).Take(10).ToList()
+                Proximas = proximas,
+                Recentes = recentes
             };
         }
 

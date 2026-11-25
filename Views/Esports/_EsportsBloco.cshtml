@@ -1,7 +1,7 @@
 @using SportStats.Integracao.Modelos
 @model SportStats.Models.Esports.EsportsBloco
 
-<section class="bloco">
+<section class="bloco" data-ao-vivo-bloco="@(Model.Destaque ? "true" : "false")">
     <h2 class="bloco-titulo">
         @if (Model.Destaque)
         {
@@ -68,7 +68,7 @@
                             }
                             else
                             {
-                                <b data-placar-casa="@p.Chave">@p.PlacarCasa</b><i>-</i><b data-placar-fora="@p.Chave">@p.PlacarFora</b>
+                                <b data-placar-casa="@p.Chave">@(p.PlacarCasa?.ToString() ?? "—")</b><i>-</i><b data-placar-fora="@p.Chave">@(p.PlacarFora?.ToString() ?? "—")</b>
                             }
                         </span>
 
