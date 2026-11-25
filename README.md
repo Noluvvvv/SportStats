@@ -1,13 +1,6 @@
 
 # SportStats
 
-### Acompanhe partidas, placares e competições de esportes e e-sports.
-
-Um portal web acadêmico para consultar informações esportivas,
-acompanhar partidas e gerenciar dados de times, campeonatos e jogos.
-
-------------------------------------------------------------------------
-
 ## 📌 Sobre o projeto
 
 O **SportStats** é um portal de estatísticas esportivas inspirado em

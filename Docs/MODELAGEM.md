@@ -1,46 +1,185 @@
 # Modelagem do SportStats
 
-Documento de referência da modelagem. Nada daqui é executado pelo `Database/script.sql`.
+## 1. Estrutura implementada
 
-## 1. Escopo
+O diagrama representa as tabelas do [schema MySQL](../Database/script.sql) após o BACK-06, validado em MySQL 8.4.13. O banco persiste os dados esportivos locais e os dados de usuário. O acesso ao banco usa Dapper.
 
-| Fase | Dados esportivos (times, atletas, partidas) | Banco de dados |
-|---|---|---|
-| **P2 (entrega atual)** | Ficam no MySQL, cadastrados via CRUD e `script.sql` (exigência do manual: Dapper + script) | Todas as tabelas do `script.sql` |
-| **Futuro** | Chegam por **WebSocket** (fonte externa, tempo real) | Só dados do próprio sistema (usuário e afins) |
+`PK` indica chave primária, `FK` indica chave estrangeira e `UK` indica unicidade. Quando várias colunas da mesma tabela têm a marca `PK`, elas compõem uma única chave. As linhas contínuas indicam que a FK integra a PK da tabela dependente. As linhas tracejadas indicam que a FK fica fora da PK.
 
-## 2. Camada A: dados esportivos
+```mermaid
+erDiagram
+    Modalidade ||..o{ Campeonato : ModalidadeId
+    Modalidade ||..o{ Atleta : ModalidadeId
+    Campeonato ||--o{ CampeonatoTime : CampeonatoId
+    Time ||--o{ CampeonatoTime : TimeId
+    Atleta ||..o{ Transferencia : AtletaId
+    Time ||..o{ Transferencia : TimeId
+    Campeonato ||..o{ Partida : CampeonatoId
+    Time ||..o{ Partida : TimeCasaId
+    Time ||..o{ Partida : TimeForaId
+    Atleta ||..o| EstatisticaFutebol : AtletaId
+    Atleta ||..o| EstatisticaBasquete : AtletaId
+    Atleta ||..o| EstatisticaValorant : AtletaId
+    Atleta ||..o| EstatisticaCsGo : AtletaId
+    Usuario ||--o| PreferenciaUsuario : UsuarioId
+    Usuario ||--o{ Favorito : UsuarioId
+    Usuario ||..o{ Notificacao : UsuarioId
+    Usuario ||..o{ HistoricoVisualizacao : UsuarioId
 
-Hoje persistidos no MySQL. No futuro, recebidos pelo WebSocket (cache em memória, sem tabela própria).
+    Modalidade {
+        int Id PK
+        varchar(50) Nome UK
+        varchar(10) Grupo
+        varchar(20) Slug UK
+    }
+    Campeonato {
+        int Id PK
+        varchar(100) Nome
+        int Temporada
+        int ModalidadeId FK
+    }
+    Time {
+        int Id PK
+        varchar(80) Nome
+        varchar(4) Sigla
+        varchar(80) Cidade
+    }
+    CampeonatoTime {
+        int CampeonatoId PK, FK
+        int TimeId PK, FK
+    }
+    Atleta {
+        int Id PK
+        varchar(100) Nome
+        varchar(50) Nickname "opcional"
+        varchar(50) Nacionalidade
+        int ModalidadeId FK
+    }
+    Transferencia {
+        int Id PK
+        int AtletaId FK
+        int TimeId FK
+        date DataInicio
+        date DataFim "opcional"
+    }
+    Partida {
+        int Id PK
+        int CampeonatoId FK
+        int TimeCasaId FK
+        int TimeForaId FK
+        varchar(20) Tipo
+        datetime DataHora
+        int PlacarCasa
+        int PlacarFora
+        varchar(9) Status
+        int Minuto "opcional"
+        int MelhorDe
+    }
+    EstatisticaFutebol {
+        int Id PK
+        int AtletaId FK, UK
+        int Gols
+        int ChutesAGol
+        int Escanteios
+        int Cartoes
+        int Finalizacoes
+    }
+    EstatisticaBasquete {
+        int Id PK
+        int AtletaId FK, UK
+        int Pontos
+        int Assistencias
+        decimal(5,2) MediaPontos
+        int Faltas
+        int Rebotes
+    }
+    EstatisticaValorant {
+        int Id PK
+        int AtletaId FK, UK
+        int Abates
+        int Assistencias
+        varchar(50) Agente
+    }
+    EstatisticaCsGo {
+        int Id PK
+        int AtletaId FK, UK
+        int Abates
+        int Assistencias
+        int Headshots
+    }
+    Usuario {
+        int Id PK
+        varchar(100) Nome
+        varchar(150) Email UK
+        varchar(255) SenhaHash
+        datetime CriadoEm
+        datetime UltimoAcesso "opcional"
+        tinyint(1) Ativo
+    }
+    PreferenciaUsuario {
+        int UsuarioId PK, FK
+        varchar(10) GrupoPadrao
+        varchar(20) ModalidadePadrao "opcional"
+        varchar(40) FusoHorario
+        varchar(10) Idioma
+        tinyint(1) NotificacoesAtivas
+    }
+    Favorito {
+        int UsuarioId PK, FK
+        varchar(12) Tipo PK
+        varchar(20) Fonte PK
+        varchar(60) IdExterno PK
+        varchar(120) Nome "opcional"
+        datetime CriadoEm
+    }
+    Notificacao {
+        int Id PK
+        int UsuarioId FK
+        varchar(20) Tipo
+        varchar(20) Fonte "opcional"
+        varchar(60) PartidaIdExterno "opcional"
+        varchar(200) Mensagem
+        tinyint(1) Lida
+        datetime CriadaEm
+    }
+    HistoricoVisualizacao {
+        int Id PK
+        int UsuarioId FK
+        varchar(12) Tipo
+        varchar(20) Fonte
+        varchar(60) IdExterno
+        varchar(120) Nome "opcional"
+        datetime VisualizadoEm
+    }
+```
 
-| Entidade | Campos principais | Observação |
-|---|---|---|
-| Modalidade | Nome, Grupo (`esportes`/`esports`), Slug | Hoje fixa em `CatalogoModalidades` |
-| Campeonato | Nome, Temporada, Modalidade | |
-| Time | Nome, Sigla, Cidade | |
-| Atleta | Nome, Nickname, Nacionalidade, Posição, DataNascimento | Nickname só em e-sports |
-| Transferência | Atleta, Time, DataInicio, DataFim | Histórico N:N; DataFim nula = time atual |
-| Partida | Campeonato, TimeCasa, TimeFora, Tipo, DataHora, Placar, **Status**, **Minuto**, Fase, MelhorDe | Subclasses por modalidade (polimorfismo) |
-| Parcial da partida | Número, Descrição, PlacarCasa, PlacarFora | Tempos, quartos, sets ou mapas |
-| Evento da partida | Tipo (gol, cartão, substituição), Minuto, Atleta, Time | |
-| Escalação | Partida, Atleta, Time, Titular, Minutos, Nota | Base da regra de escalação inválida |
-| Estatística do atleta | Uma por modalidade (Futebol, Basquete, Vôlei, Valorant, CS, LoL) | Cada uma com `CalcularRating()` |
+### Dados esportivos
 
-Campos extras previstos nas estatísticas:
-- **Basquete:** ArremessosTentados e ArremessosConvertidos (aproveitamento).
-- **Valorant:** Função do jogador.
-- **LoL:** Mortes, Campeão e Função.
-- **Vôlei:** Pontos, Aces, Bloqueios e Ataques.
+- O catálogo de modalidades vem da tabela `Modalidade`, consultada por `ModalidadeRepository`. `Grupo` aceita `esportes` ou `esports`. Cada campeonato e cada atleta pertence a uma modalidade.
+- `CampeonatoTime` representa a relação N:N entre campeonato e time. A chave composta `(CampeonatoId, TimeId)` permite uma única inscrição por par.
+- `Transferencia` registra a relação N:N histórica entre atleta e time. Cada vínculo tem `DataInicio` e pode ter `DataFim`. Uma data final nula indica um vínculo em aberto.
+- Cada partida pertence a um campeonato e referencia `Time` em dois papéis, mandante e visitante. As FKs dos times apontam diretamente para `Time.Id`. A inscrição no campeonato é registrada separadamente em `CampeonatoTime`.
+- `Partida.Status` tem padrão `Agendada` e aceita `Agendada`, `AoVivo` ou `Encerrada`. `Minuto` aceita valor nulo ou inteiro não negativo.
+- Futebol, basquete, Valorant e Counter-Strike têm tabelas de estatística próprias. Cada registro pertence a um atleta e a restrição `UNIQUE` em `AtletaId` limita cada atleta a zero ou um registro por tabela. A FK aponta para o atleta, que carrega a referência à modalidade.
 
-Regras de integridade desejadas:
-- Time não joga contra ele mesmo.
-- `DataFim >= DataInicio` na transferência.
-- `Status` só aceita `Agendada`, `AoVivo` ou `Encerrada`.
-- Aproveitamento: convertidos <= tentados.
-- Um atleta só tem um time ativo.
+### Usuários e atividade
 
-### Contrato do WebSocket (proposta)
-Quando os dados vierem de fora, os ids passam a ser **externos** (texto), não mais inteiros do banco:
+- `PreferenciaUsuario.UsuarioId` é PK e FK. Cada preferência pertence a um usuário e cada usuário pode ter zero ou uma preferência no banco. `ModalidadePadrao` guarda o slug como texto, sem FK para `Modalidade`. `GrupoPadrao` aceita `esportes` ou `esports`.
+- Cada usuário pode ter vários favoritos, notificações e registros de visualização. As quatro FKs para `Usuario` usam `ON DELETE CASCADE`.
+- `Favorito` identifica o alvo por `Tipo`, `Fonte` e `IdExterno`. O tipo aceita `time`, `atleta`, `competicao` ou `partida`. `HistoricoVisualizacao` usa os mesmos campos para registrar cada visualização. `Notificacao` pode guardar a referência da partida em `Fonte` e `PartidaIdExterno`.
+- As referências a alvos esportivos são textuais, sem FK. A fonte `SportStats` identifica um ID interno armazenado como texto. As demais fontes identificam registros externos.
+- `Notificacao` tem índice em `(UsuarioId, Lida)`. `HistoricoVisualizacao` tem índice em `(UsuarioId, VisualizadoEm)`. `Usuario.SenhaHash` guarda o hash da senha.
+
+## 2. Funcionalidades previstas
+
+- A integração de favoritos, notificações e histórico com a aplicação está prevista no BACK-09. As tabelas correspondentes já fazem parte do schema.
+- Parciais de partida (tempos, quartos, sets ou mapas), eventos (gols, cartões e substituições) e escalações constam da proposta anterior de modelagem. A proposta também incluía fase da partida, posição e data de nascimento do atleta.
+- A proposta de estatísticas incluía tabelas para vôlei (pontos, aces, bloqueios e ataques) e League of Legends (mortes, campeão e função), além de arremessos tentados e convertidos no basquete e função do jogador no Valorant.
+- Entre as regras de integridade propostas estão exigir times distintos em uma partida, exigir `DataFim >= DataInicio`, limitar o atleta a um vínculo em aberto e garantir que arremessos convertidos sejam no máximo iguais aos tentados.
+
+### Proposta histórica de atualização em tempo real
+
+A proposta previa receber dados esportivos por WebSocket, identificar os registros do provedor por IDs textuais e manter os dados recebidos em memória. O exemplo registra o formato discutido para alinhamento com SignalR no BACK-05.
 
 ```json
 {
@@ -55,83 +194,5 @@ Quando os dados vierem de fora, os ids passam a ser **externos** (texto), não m
   "eventos": [ { "tipo": "Gol", "minuto": 12, "atletaId": "ext-a1", "timeId": "ext-t1" } ]
 }
 ```
-A tarefa BACK-05 (SignalR) deve alinhar a mensagem do hub com este formato.
 
-## 3. Camada B: dados persistidos no banco (futuro)
-
-Só o que pertence ao sistema. Como times e competições virão de fora, os favoritos guardam o **id externo** e a origem.
-
-```sql
--- REFERENCIA (nao executar ainda)
-CREATE TABLE Usuario (
-    Id INT AUTO_INCREMENT PRIMARY KEY,
-    Nome VARCHAR(100) NOT NULL,
-    Email VARCHAR(150) NOT NULL UNIQUE,
-    SenhaHash VARCHAR(255) NOT NULL,
-    CriadoEm DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE FavoritoTime (
-    UsuarioId INT NOT NULL,
-    Origem VARCHAR(30) NOT NULL,
-    TimeIdExterno VARCHAR(60) NOT NULL,
-    NomeCache VARCHAR(80) NULL,
-    PRIMARY KEY (UsuarioId, Origem, TimeIdExterno),
-    FOREIGN KEY (UsuarioId) REFERENCES Usuario(Id)
-);
-
-CREATE TABLE FavoritoCompeticao (
-    UsuarioId INT NOT NULL,
-    Origem VARCHAR(30) NOT NULL,
-    CompeticaoIdExterno VARCHAR(60) NOT NULL,
-    NomeCache VARCHAR(100) NULL,
-    PRIMARY KEY (UsuarioId, Origem, CompeticaoIdExterno),
-    FOREIGN KEY (UsuarioId) REFERENCES Usuario(Id)
-);
-
-CREATE TABLE PreferenciaUsuario (
-    UsuarioId INT PRIMARY KEY,
-    GrupoPadrao VARCHAR(10) NOT NULL DEFAULT 'esportes',
-    ModalidadeSlug VARCHAR(20) NULL,
-    FOREIGN KEY (UsuarioId) REFERENCES Usuario(Id)
-);
-```
-
-Cuidados:
-- Guardar **hash** da senha (ex.: BCrypt), nunca texto puro.
-- Sem CPF: não é necessário e exige cuidado com LGPD. Se um dia for preciso, usar `VARCHAR(11)`, nunca `INT`.
-- Evitar Entity Framework e Identity: o acesso a dados continua com Dapper.
-
-## 4. Diagrama (futuro)
-
-```mermaid
-erDiagram
-    Usuario ||--o{ FavoritoTime : favorita
-    Usuario ||--o{ FavoritoCompeticao : favorita
-    Usuario ||--o| PreferenciaUsuario : configura
-```
-
-Diagrama da camada esportiva (P2, banco atual):
-
-```mermaid
-erDiagram
-    Modalidade ||--o{ Campeonato : possui
-    Modalidade ||--o{ Atleta : pratica
-    Campeonato ||--o{ CampeonatoTime : inscreve
-    Time ||--o{ CampeonatoTime : participa
-    Campeonato ||--o{ Partida : reune
-    Time ||--o{ Partida : "casa e fora"
-    Atleta ||--o{ Transferencia : historico
-    Time ||--o{ Transferencia : contrata
-    Atleta ||--o| EstatisticaFutebol : tem
-    Atleta ||--o| EstatisticaBasquete : tem
-    Atleta ||--o| EstatisticaValorant : tem
-    Atleta ||--o| EstatisticaCsGo : tem
-```
-
-## 5. Decisões em aberto
-
-- Qual provedor ou API vai alimentar o WebSocket.
-- Se haverá cache em banco do que chega pelo WebSocket (histórico de partidas encerradas).
-- Login: e-mail e senha próprios ou login social.
-- Quais notificações o usuário poderá receber (início de jogo, gol).
+Na proposta, ficaram em aberto a escolha da fonte para as atualizações em tempo real, o eventual cache de partidas encerradas no MySQL, a adoção de login social e os eventos que gerariam notificações.

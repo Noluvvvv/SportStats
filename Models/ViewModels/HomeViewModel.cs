@@ -15,6 +15,12 @@ public class HomeViewModel
 
     public string? TituloClassificacao { get; set; }
     public List<LinhaClassificacao> Classificacao { get; set; } = new();
+
+    public List<LinhaRanking> RankingFutebol { get; set; } = new();
+    public List<LinhaRanking> RankingBasquete { get; set; } = new();
+    public List<LinhaRanking> RankingValorant { get; set; } = new();
+    public List<LinhaRanking> RankingCsGo { get; set; } = new();
+
 }
 
 public record BlocoPartidas(string Titulo, IReadOnlyList<PartidaResumo> Partidas, string Vazio, bool Destaque = false);

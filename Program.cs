@@ -3,6 +3,7 @@ using SportStats.Integracao;
 using SportStats.Models;
 using SportStats.Repositories.Dapper;
 using SportStats.Repositories.Interfaces;
+using SportStats.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +15,16 @@ builder.Services.AddScoped<IRepository<Campeonato>, CampeonatoRepository>();
 builder.Services.AddScoped<IModalidadeRepository, ModalidadeRepository>();
 builder.Services.AddScoped<IPartidaRepository, PartidaRepository>();
 builder.Services.AddScoped<IRepository<Partida>>(sp => sp.GetRequiredService<IPartidaRepository>());
-
+builder.Services.AddScoped<ITransferenciaRepository, TransferenciaRepository>();
+builder.Services.AddScoped<IRepository<Atleta>, AtletaRepository>();
 builder.Services.AddIntegracaoEsportiva(builder.Configuration);
+
+builder.Services.AddScoped<IRepository<EstatisticaFutebol>, EstatisticaFutebolRepository>();
+builder.Services.AddScoped<IRepository<EstatisticaBasquete>, EstatisticaBasqueteRepository>();
+builder.Services.AddScoped<IRepository<EstatisticaValorant>, EstatisticaValorantRepository>();
+builder.Services.AddScoped<IRepository<EstatisticaCsGo>, EstatisticaCsGoRepository>();
+
+builder.Services.AddScoped<RankingService>();
 
 var app = builder.Build();
 

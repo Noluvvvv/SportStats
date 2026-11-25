@@ -1,14 +1,27 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportStats.Models;
+using SportStats.Models.ViewModels;
+using SportStats.Services;
 
 namespace SportStats.Controllers;
 
 public class HomeController : Controller
 {
+    private readonly RankingService _rankingService;
+
+    public HomeController(RankingService rankingService)
+    {
+        _rankingService = rankingService;
+    }
+
     public IActionResult Index()
     {
-        return View();
+        var model = new HomeViewModel();
+
+        _rankingService.CarregarRankings(model);
+
+        return View(model);
     }
 
     public IActionResult Privacy()

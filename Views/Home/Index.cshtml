@@ -82,7 +82,122 @@
             </table>
         }
 
-        @* BACKEND: espaco reservado para artilharia / ranking de atletas por rating
-           (EstatisticaFutebol, EstatisticaBasquete, EstatisticaValorant, EstatisticaCsGo). (BACK-04) *@
+
+        <section class="ranking-atletas">
+            <h2 class="coluna-titulo">Rankings de atletas</h2>
+
+            <h3 class="sub">Futebol</h3>
+            @if (!Model.RankingFutebol.Any())
+            {
+                <p class="vazio">Sem estatísticas de futebol.</p>
+            }
+            else
+            {
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Atleta</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var atleta in Model.RankingFutebol)
+                        {
+                            <tr>
+                                <td>@atleta.Posicao</td>
+                                <td>@atleta.Nome</td>
+                                <td><strong>@atleta.Rating.ToString("F1")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <h3 class="sub">Basquete</h3>
+            @if (!Model.RankingBasquete.Any())
+            {
+                <p class="vazio">Sem estatísticas de basquete.</p>
+            }
+            else
+            {
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Atleta</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var atleta in Model.RankingBasquete)
+                        {
+                            <tr>
+                                <td>@atleta.Posicao</td>
+                                <td>@atleta.Nome</td>
+                                <td><strong>@atleta.Rating.ToString("F1")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <h3 class="sub">Valorant</h3>
+            @if (!Model.RankingValorant.Any())
+            {
+                <p class="vazio">Sem estatísticas de Valorant.</p>
+            }
+            else
+            {
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jogador</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var atleta in Model.RankingValorant)
+                        {
+                            <tr>
+                                <td>@atleta.Posicao</td>
+                                <td>@(atleta.Nickname ?? atleta.Nome)</td>
+                                <td><strong>@atleta.Rating.ToString("F1")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+
+            <h3 class="sub">CS:GO</h3>
+            @if (!Model.RankingCsGo.Any())
+            {
+                <p class="vazio">Sem estatísticas de CS:GO.</p>
+            }
+            else
+            {
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Jogador</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var atleta in Model.RankingCsGo)
+                        {
+                            <tr>
+                                <td>@atleta.Posicao</td>
+                                <td>@(atleta.Nickname ?? atleta.Nome)</td>
+                                <td><strong>@atleta.Rating.ToString("F1")</strong></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </section>
+
     </aside>
 </main>

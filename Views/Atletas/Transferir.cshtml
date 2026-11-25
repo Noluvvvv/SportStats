@@ -1,0 +1,36 @@
+@model TransferenciaFormViewModel
+
+@{
+    ViewData["Title"] = "Transferir atleta";
+}
+
+<main class="pagina">
+    <div class="pagina-topo">
+        <h1>Transferir atleta</h1>
+    </div>
+
+    <form asp-action="Transferir" asp-route-id="@Model.AtletaId"
+          method="post" class="formulario">
+
+        <div class="campo">
+            <label asp-for="TimeId"></label>
+            <select asp-for="TimeId" asp-items="Model.Times">
+                <option value="0">Selecione o novo time</option>
+            </select>
+            <span asp-validation-for="TimeId" class="campo-erro"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="DataInicio"></label>
+            <input asp-for="DataInicio" type="date" />
+            <span asp-validation-for="DataInicio" class="campo-erro"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-vermelho">
+                Confirmar transferência
+            </button>
+            <a class="botao" asp-action="Index">Cancelar</a>
+        </div>
+    </form>
+</main>
