@@ -53,9 +53,13 @@ public sealed class ServicoTempoReal : BackgroundService
                         proximaAgenda = agora.AddSeconds(Math.Max(60, o.IntervaloAgendaSegundos));
                     }
 
+                    // So substitui o snapshot depois de uma consulta concluida.
+                    // Falhas sobem para o catch externo e preservam o cache anterior.
                     var aoVivo = await provedor.ObterAoVivoAsync(ct);
-                    _cache.Mesclar(provedor.Nome, aoVivo);
-                    await PublicarAsync(aoVivo, ct);
+
+                    _cache.SubstituirAoVivo(provedor.Nome, aoVivo);
+
+                    await PublicarAsync(provedor, aoVivo, ct);
 
                     if (provedor is IProvedorTempoReal tempoReal && o.TempoRealWebSocket)
                         GerenciarAssinaturas(tempoReal, aoVivo, o.MaxPartidasWebSocket, ct);
@@ -69,16 +73,33 @@ public sealed class ServicoTempoReal : BackgroundService
         } while (await AguardarAsync(timer, ct));
     }
 
-    // Envia o placar das partidas ao vivo para os grupos do SignalR: grupo (esportes/esports) e modalidade (lol, cs...).
-    private async Task PublicarAsync(IReadOnlyList<PartidaExterna> aoVivo, CancellationToken ct)
+    // Publica tambem snapshots vazios para informar que nao ha mais partidas ao vivo.
+    private async Task PublicarAsync(
+        IProvedorDados provedor,
+        IReadOnlyList<PartidaExterna> aoVivo,
+        CancellationToken ct)
     {
-        if (aoVivo.Count == 0) return;
+        var grupoGeral = provedor.Nome == "PandaScore" ? "esports" : "esportes";
 
-        foreach (var g in aoVivo.GroupBy(p => Modalidades.Esports.Contains(p.ModalidadeSlug) ? "esports" : "esportes"))
-            await _hub.Clients.Group(g.Key).SendAsync("placarAtualizado", g.Select(Resumo).ToList(), ct);
+        var modalidades = provedor.Nome == "PandaScore"
+            ? new[] { "lol", "valorant", "cs" }
+            : new[] { "futebol", "basquete", "volei" };
 
-        foreach (var g in aoVivo.GroupBy(p => p.ModalidadeSlug))
-            await _hub.Clients.Group(g.Key).SendAsync("placarAtualizado", g.Select(Resumo).ToList(), ct);
+        var resumo = aoVivo.Select(Resumo).ToList();
+
+        await _hub.Clients.Group(grupoGeral)
+            .SendAsync("placarAtualizado", resumo, ct);
+
+        foreach (var modalidade in modalidades)
+        {
+            var partidasDaModalidade = aoVivo
+                .Where(p => p.ModalidadeSlug == modalidade)
+                .Select(Resumo)
+                .ToList();
+
+            await _hub.Clients.Group(modalidade)
+                .SendAsync("placarAtualizado", partidasDaModalidade, ct);
+        }
     }
 
     private static object Resumo(PartidaExterna p) => new
