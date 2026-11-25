@@ -1,120 +1,141 @@
-﻿using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using SportStats.Models;
+﻿using Microsoft.AspNetCore.Mvc;
+using SportStats.Integracao;
+using SportStats.Integracao.Modelos;
 using SportStats.Models.ViewModels;
-using SportStats.Repositories.Interfaces;
-using SportStats.Services;
 
 namespace SportStats.Controllers;
 
 public class HomeController : Controller
 {
-    private readonly IPartidaConsultaRepository _consulta;
-    private readonly ClassificacaoService _classificacao;
-    private readonly RankingService _rankingService;
+    private readonly CachePartidasExternas _cache;
 
-    public HomeController(
-        IPartidaConsultaRepository consulta,
-        ClassificacaoService classificacao,
-        RankingService rankingService)
+    public HomeController(CachePartidasExternas cache)
     {
-        _consulta = consulta;
-        _classificacao = classificacao;
-        _rankingService = rankingService;
+        _cache = cache;
     }
 
-    public IActionResult Index(string? grupo, string? modalidade, int? campeonato)
+    public IActionResult Index(
+        string? grupo,
+        string? modalidade,
+        string? campeonato)
     {
-        var (grupoAtivo, info, nomes) = Resolver(grupo, modalidade);
+        var info = CatalogoModalidades.PorSlug(modalidade);
 
-        var partidas = _consulta.Listar(nomes, campeonato).ToList();
-        var competicoes = _consulta.ListarCompeticoes(nomes).ToList();
+        var grupoAtivo = info?.Grupo ??
+            (grupo?.Equals("esports", StringComparison.OrdinalIgnoreCase) == true
+                ? "esports"
+                : "esportes");
+
+        var modalidades = CatalogoModalidades.DoGrupo(grupoAtivo).ToList();
+
+        var partidas = _cache.AoVivo(grupoAtivo)
+            .Concat(_cache.Agenda(grupoAtivo))
+            .Where(p => info == null || p.ModalidadeSlug == info.Slug)
+            .ToList();
+
+        var competicoes = partidas
+            .GroupBy(p => new
+            {
+                p.Fonte,
+                Id = string.IsNullOrWhiteSpace(p.CampeonatoIdExterno)
+                    ? p.Campeonato
+                    : p.CampeonatoIdExterno,
+                p.Campeonato,
+                p.ModalidadeSlug
+            })
+            .Select(g => new CompeticaoExternaItem
+            {
+                Chave = $"{g.Key.Fonte}:{g.Key.Id}",
+                Nome = g.Key.Campeonato,
+                Fonte = g.Key.Fonte,
+                ModalidadeSlug = g.Key.ModalidadeSlug,
+                ModalidadeNome = CatalogoModalidades.PorSlug(g.Key.ModalidadeSlug)?.Nome
+                    ?? g.Key.ModalidadeSlug
+            })
+            .OrderBy(c => c.Nome)
+            .ToList();
+
+        if (!string.IsNullOrWhiteSpace(campeonato))
+        {
+            partidas = partidas
+                .Where(p =>
+                {
+                    var id = string.IsNullOrWhiteSpace(p.CampeonatoIdExterno)
+                        ? p.Campeonato
+                        : p.CampeonatoIdExterno;
+
+                    return $"{p.Fonte}:{id}" == campeonato;
+                })
+                .ToList();
+        }
 
         var vm = new HomeViewModel
         {
             Grupo = grupoAtivo,
             ModalidadeSlug = info?.Slug,
             CampeonatoId = campeonato,
-            Modalidades = CatalogoModalidades.DoGrupo(grupoAtivo).ToList(),
+            Modalidades = modalidades,
             Competicoes = competicoes,
+
             AoVivo = partidas
-                .Where(p => p.AoVivo)
-                .OrderBy(p => p.DataHora)
+                .Where(p => p.Status is StatusPartidaExterna.AoVivo
+                    or StatusPartidaExterna.Intervalo)
+                .OrderBy(p => p.IniciaEmUtc)
                 .ToList(),
+
             Proximas = partidas
-                .Where(p => p.Agendada)
-                .OrderBy(p => p.DataHora)
-                .Take(10)
-                .ToList(),
-            Recentes = partidas
-                .Where(p => p.Encerrada)
-                .OrderByDescending(p => p.DataHora)
+                .Where(p => p.Status == StatusPartidaExterna.Agendada)
+                .OrderBy(p => p.IniciaEmUtc)
                 .Take(15)
-                .ToList()
+                .ToList(),
+
+            Recentes = partidas
+                .Where(p => p.Status == StatusPartidaExterna.Encerrada)
+                .OrderByDescending(p => p.IniciaEmUtc)
+                .Take(15)
+                .ToList(),
+
+            AtualizacaoEspn = _cache.UltimaAtualizacao("ESPN"),
+            AtualizacaoPandaScore = _cache.UltimaAtualizacao("PandaScore"),
+
+            TituloClassificacao = null,
+            Classificacao = new List<LinhaClassificacao>()
         };
-
-        // Preserva os rankings existentes na branch main.
-        _rankingService.CarregarRankings(vm);
-
-        var idClassificacao = campeonato ?? competicoes.FirstOrDefault()?.Id;
-
-        if (idClassificacao is int id)
-        {
-            vm.TituloClassificacao =
-                competicoes.FirstOrDefault(c => c.Id == id)?.Nome;
-
-            vm.Classificacao = _classificacao.Calcular(id);
-        }
 
         return View(vm);
     }
 
-    public IActionResult Privacy() => View();
-
     [HttpGet]
     public IActionResult AoVivo(string? grupo, string? modalidade)
-    {
-        var (_, _, nomes) = Resolver(grupo, modalidade);
-
-        var placares = _consulta.Listar(nomes, null)
-            .Where(p => p.AoVivo)
-            .Select(p => new
-            {
-                p.Id,
-                p.PlacarCasa,
-                p.PlacarFora
-            });
-
-        return Json(placares);
-    }
-
-    [ResponseCache(
-        Duration = 0,
-        Location = ResponseCacheLocation.None,
-        NoStore = true)]
-    public IActionResult Error() =>
-        View(new ErrorViewModel
-        {
-            RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
-        });
-
-    private static (
-        string Grupo,
-        ModalidadeInfo? Info,
-        string[] Nomes
-    ) Resolver(string? grupo, string? modalidade)
     {
         var info = CatalogoModalidades.PorSlug(modalidade);
 
         var grupoAtivo = info?.Grupo ??
-            (grupo == "esports" ? "esports" : "esportes");
+            (grupo?.Equals("esports", StringComparison.OrdinalIgnoreCase) == true
+                ? "esports"
+                : "esportes");
 
-        var nomes = info is not null
-            ? new[] { info.Nome }
-            : CatalogoModalidades.DoGrupo(grupoAtivo)
-                .Select(m => m.Nome)
-                .ToArray();
+        var placares = _cache.AoVivo(grupoAtivo)
+            .Where(p => info == null || p.ModalidadeSlug == info.Slug)
+            .Select(p => new
+            {
+                chave = p.Chave,
+                placarCasa = p.PlacarCasa,
+                placarFora = p.PlacarFora,
+                status = p.Status.ToString(),
+                detalhe = p.Detalhe,
+                minuto = p.Minuto
+            })
+            .ToList();
 
-        return (grupoAtivo, info, nomes);
+        return Json(placares);
+    }
+
+    public IActionResult Privacy() => View();
+
+    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+    public IActionResult Error()
+    {
+        return View();
     }
 }

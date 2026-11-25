@@ -1,0 +1,82 @@
+﻿@model SportStats.Integracao.Modelos.PartidaExterna
+
+@{
+    var aoVivo = Model.Status is SportStats.Integracao.Modelos.StatusPartidaExterna.AoVivo
+        or SportStats.Integracao.Modelos.StatusPartidaExterna.Intervalo;
+
+    var agendada = Model.Status == SportStats.Integracao.Modelos.StatusPartidaExterna.Agendada;
+
+    var encerrada = Model.Status == SportStats.Integracao.Modelos.StatusPartidaExterna.Encerrada;
+
+    var casa = string.IsNullOrWhiteSpace(Model.Casa.Sigla)
+        ? Model.Casa.Nome
+        : Model.Casa.Sigla;
+
+    var fora = string.IsNullOrWhiteSpace(Model.Fora.Sigla)
+        ? Model.Fora.Nome
+        : Model.Fora.Sigla;
+}
+
+<a class="jogo @(aoVivo ? "jogo-ao-vivo" : "")" href="#">
+
+    <span class="jogo-status">
+        @if (aoVivo)
+        {
+            <span class="status-vivo">
+                <span class="pulso" aria-hidden="true"></span>
+                @(Model.Status == SportStats.Integracao.Modelos.StatusPartidaExterna.Intervalo
+                    ? "INTERVALO"
+                    : "AO VIVO")
+            </span>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Detalhe))
+            {
+                <small class="formato">@Model.Detalhe</small>
+            }
+        }
+        else if (encerrada)
+        {
+            <span>Encerrado</span>
+        }
+        else if (Model.Status == SportStats.Integracao.Modelos.StatusPartidaExterna.Adiada)
+        {
+            <span>Adiado</span>
+        }
+        else if (Model.Status == SportStats.Integracao.Modelos.StatusPartidaExterna.Cancelada)
+        {
+            <span>Cancelado</span>
+        }
+        else
+        {
+            <span>@Model.IniciaEmUtc.ToLocalTime().ToString("dd/MM HH:mm")</span>
+        }
+
+        @if (Model.MelhorDe is int md && md > 0)
+        {
+            <small class="formato">MD@md</small>
+        }
+    </span>
+
+    <span class="time time-casa">
+        <span class="nome">@Model.Casa.Nome</span>
+        <abbr class="sigla" title="@Model.Casa.Nome">@casa</abbr>
+    </span>
+
+    <span class="placar">
+        @if (agendada)
+        {
+            <span class="vs">vs</span>
+        }
+        else
+        {
+            <b data-placar-casa="@Model.Chave">@Model.PlacarCasa</b>
+            <i>-</i>
+            <b data-placar-fora="@Model.Chave">@Model.PlacarFora</b>
+        }
+    </span>
+
+    <span class="time time-fora">
+        <span class="nome">@Model.Fora.Nome</span>
+        <abbr class="sigla" title="@Model.Fora.Nome">@fora</abbr>
+    </span>
+</a>

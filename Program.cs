@@ -34,7 +34,6 @@ builder.Services.AddScoped<IRepository<EstatisticaValorant>, EstatisticaValorant
 builder.Services.AddScoped<IRepository<EstatisticaCsGo>, EstatisticaCsGoRepository>();
 
 // Servico de rankings
-builder.Services.AddScoped<RankingService>();
 
 // Integracoes esportivas
 builder.Services.AddIntegracaoEsportiva(builder.Configuration);
@@ -61,3 +60,4 @@ app.MapControllerRoute(
 app.MapHub<PlacarHub>("/hubs/placar");
 
 app.Run();
+

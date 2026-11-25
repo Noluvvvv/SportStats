@@ -1,4 +1,4 @@
-@{
+﻿@{
     var grupo = ViewData["Grupo"] as string ?? "esportes";
 }
 <!DOCTYPE html>
@@ -28,6 +28,7 @@
 
     @RenderBody()
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

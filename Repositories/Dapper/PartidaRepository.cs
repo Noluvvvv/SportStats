@@ -1,4 +1,4 @@
-using SportStats.Exceptions;
+﻿using SportStats.Exceptions;
 using SportStats.Models;
 using SportStats.Models.Enums;
 using SportStats.Repositories.Interfaces;
@@ -27,7 +27,7 @@ public class PartidaRepository : IPartidaRepository
     }
 
     private const string Colunas =
-        "Id, CampeonatoId, TimeCasaId, TimeForaId, Tipo, DataHora, PlacarCasa, PlacarFora, Encerrada, MelhorDe";
+        "Id, CampeonatoId, TimeCasaId, TimeForaId, Tipo, DataHora, PlacarCasa, PlacarFora, CASE WHEN Status = 'Encerrada' THEN 1 ELSE 0 END AS Encerrada, MelhorDe";
 
     private static Partida Montar(Linha l) => Enum.Parse<TipoPartida>(l.Tipo) switch
     {
@@ -73,9 +73,9 @@ public class PartidaRepository : IPartidaRepository
             using var con = _factory.Criar();
             return con.ExecuteScalar<int>(
                 @"INSERT INTO Partida (CampeonatoId, TimeCasaId, TimeForaId, Tipo, DataHora,
-                                       PlacarCasa, PlacarFora, Encerrada, MelhorDe)
+                                       PlacarCasa, PlacarFora, Status, MelhorDe)
                   VALUES (@CampeonatoId, @TimeCasaId, @TimeForaId, @Tipo, @DataHora,
-                          @PlacarCasa, @PlacarFora, @Encerrada, @MelhorDe);
+                          @PlacarCasa, @PlacarFora, CASE WHEN @Encerrada = 1 THEN 'Encerrada' ELSE 'Agendada' END, @MelhorDe);
                   SELECT LAST_INSERT_ID();",
                 new
                 {
@@ -86,7 +86,7 @@ public class PartidaRepository : IPartidaRepository
         }
         catch (MySqlException ex) when (ex.ErrorCode is MySqlErrorCode.NoReferencedRow2 or MySqlErrorCode.NoReferencedRow)
         {
-            throw new DominioException("Campeonato ou time informado não existe.");
+            throw new DominioException("Campeonato ou time informado nÃ£o existe.");
         }
     }
 
@@ -95,7 +95,7 @@ public class PartidaRepository : IPartidaRepository
         using var con = _factory.Criar();
         con.Execute(
             @"UPDATE Partida SET DataHora = @DataHora, PlacarCasa = @PlacarCasa,
-                                 PlacarFora = @PlacarFora, Encerrada = @Encerrada
+                                 PlacarFora = @PlacarFora, Status = CASE WHEN @Encerrada = 1 THEN 'Encerrada' ELSE 'Agendada' END
               WHERE Id = @Id",
             new { p.DataHora, p.PlacarCasa, p.PlacarFora, p.Encerrada, p.Id });
     }

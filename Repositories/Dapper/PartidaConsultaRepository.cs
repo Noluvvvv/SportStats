@@ -27,7 +27,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
             p.DataHora,
             p.PlacarCasa,
             p.PlacarFora,
-            p.Encerrada,
+            CASE WHEN p.Status = 'Encerrada' THEN 1 ELSE 0 END AS Encerrada,
             p.MelhorDe
         FROM Partida p
         JOIN Campeonato c ON c.Id = p.CampeonatoId
@@ -36,7 +36,7 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
         JOIN `Time` tf ON tf.Id = p.TimeForaId";
 
     private const string FiltroConfronto = @"
-        p.Encerrada = 1
+        p.Status = 'Encerrada'
         AND p.Id <> @partidaId
         AND (
             (p.TimeCasaId = @timeCasaId AND p.TimeForaId = @timeForaId)
@@ -195,3 +195,4 @@ public class PartidaConsultaRepository : IPartidaConsultaRepository
         };
     }
 }
+

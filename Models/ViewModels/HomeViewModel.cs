@@ -1,33 +1,42 @@
-﻿namespace SportStats.Models.ViewModels;
+﻿using SportStats.Integracao.Modelos;
+
+namespace SportStats.Models.ViewModels;
 
 public class HomeViewModel
 {
     public string Grupo { get; set; } = "esportes";
     public string? ModalidadeSlug { get; set; }
-    public int? CampeonatoId { get; set; }
+    public string? CampeonatoId { get; set; }
 
     public List<ModalidadeInfo> Modalidades { get; set; } = new();
-    public List<CompeticaoItem> Competicoes { get; set; } = new();
+    public List<CompeticaoExternaItem> Competicoes { get; set; } = new();
 
-    public List<PartidaResumo> AoVivo { get; set; } = new();
-    public List<PartidaResumo> Proximas { get; set; } = new();
-    public List<PartidaResumo> Recentes { get; set; } = new();
+    public List<PartidaExterna> AoVivo { get; set; } = new();
+    public List<PartidaExterna> Proximas { get; set; } = new();
+    public List<PartidaExterna> Recentes { get; set; } = new();
 
     public string? TituloClassificacao { get; set; }
     public List<LinhaClassificacao> Classificacao { get; set; } = new();
 
-    public List<LinhaRanking> RankingFutebol { get; set; } = new();
-    public List<LinhaRanking> RankingBasquete { get; set; } = new();
-    public List<LinhaRanking> RankingValorant { get; set; } = new();
-    public List<LinhaRanking> RankingCsGo { get; set; } = new();
+    public DateTime? AtualizacaoEspn { get; set; }
+    public DateTime? AtualizacaoPandaScore { get; set; }
 }
 
 public record BlocoPartidas(
     string Titulo,
-    IReadOnlyList<PartidaResumo> Partidas,
+    IReadOnlyList<PartidaExterna> Partidas,
     string Vazio,
     bool Destaque = false
 );
+
+public class CompeticaoExternaItem
+{
+    public string Chave { get; set; } = "";
+    public string Nome { get; set; } = "";
+    public string ModalidadeNome { get; set; } = "";
+    public string ModalidadeSlug { get; set; } = "";
+    public string Fonte { get; set; } = "";
+}
 
 public class LinhaClassificacao
 {

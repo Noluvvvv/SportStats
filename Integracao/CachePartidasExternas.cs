@@ -1,10 +1,10 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using SportStats.Integracao.Modelos;
 
 namespace SportStats.Integracao;
 
 // Armazena em memoria o que chega das APIs.
-// BACKEND (BACK-05/06): persistir no MySQL por FonteId + IdExterno e disparar o Hub SignalR.
+// Os dados esportivos permanecem somente em memoria; nao sao persistidos no MySQL.
 public sealed class CachePartidasExternas
 {
     private static readonly TimeSpan ValidadeAoVivo = TimeSpan.FromMinutes(2);
